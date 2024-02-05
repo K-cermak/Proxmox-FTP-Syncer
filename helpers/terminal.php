@@ -13,6 +13,13 @@
         }
     }
 
+    function successMessage($message, $newLine = true) {
+        echo "\033[32m$message\033[0m";
+        if ($newLine) {
+            echo "\n";
+        }
+    }
+
     function boldMessage($message, $newLine = true) {
         echo "\033[1m$message\033[0m";
         if ($newLine) {

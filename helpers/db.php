@@ -11,8 +11,17 @@
             return;
         }
 
+        //state = 0 - discovered, 1 - uploading, 2 - uploaded, 3 - deleting, 4 - deleted, 5 - lost
 
-        //continue
+        $connection = connectToDb();
+        $connection->exec("CREATE TABLE `files` (
+            `fileName` TEXT NOT NULL,
+            `state` INTEGER NOT NULL DEFAULT 0,
+            `discoveredOn` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `toDelete` DATETIME
+        )");
+
+        successMessage("Database created successfully.");
     }
 
     function canDelete() {
@@ -29,8 +38,20 @@
         }
 
         fclose($handle);
-        //delete old db
-        unlink(DB_FILE);
+        unlink(DB_FILE); //delete old db
         return True;
+    }
+
+
+    function connectToDb() {
+        $conn = new PDO("sqlite:" . DB_FILE);
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        //enable foreign keys
+        $conn->exec("PRAGMA foreign_keys = ON;");
+        if (!$conn) {
+            errorMessage("ERROR: Could not connect to the database.");
+            exit(1);
+        }
+        return $conn;
     }
 ?>

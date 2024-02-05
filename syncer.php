@@ -1,6 +1,6 @@
 <?php
     //todo:
-        // discovery, sync, autorun
+        // sync, autorun
         // fix not completed
 
         // emails
@@ -33,14 +33,10 @@
         checkConnection();
     } else if ($arg == "check-settings") {
         checkSettings();
-    } else if ($arc == "discovery") {
-        // safe - just list new files, no changes in DB [default]
-        // light - will add new files in DB, but wont edit files deletition date when not found anything new
-        // classic - will add new files in DB, will edit files deletition date when not found anything new caution!
-
+    } else if ($arg == "discovery") {
+        $type = $argv[2] ?? "safe";
+        getNewFiles($type);
     }
-
-
 
     //job - conn, discovery, sync, delete old
 

@@ -15,6 +15,14 @@
         echo " - create a new database";
         errorMessage(" (WARNING: This will delete all data in the current database!)");
 
+        //discovery
+        boldMessage("       discovery", false);
+        echo " [list|safe|light|classic] - discover new files\n";
+        echo "            list - just list all files (even old), no changes in DB\n";
+        echo "            safe - just list new files, no changes in DB [default]\n";
+        echo "            light - will add new files in DB, but wont edit files deletion date when not found anything new\n";
+        echo "            classic - will add new files in DB, will edit files deletion date when not found anything new\n";
+
         //help
         boldMessage("       help", false);
         echo " - display this help\n";

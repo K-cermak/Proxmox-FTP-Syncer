@@ -42,7 +42,6 @@
         return True;
     }
 
-
     function connectToDb() {
         $conn = new PDO("sqlite:" . DB_FILE);
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -54,4 +53,33 @@
         }
         return $conn;
     }
+
+    function getFileData($fileName, $connection) {
+        $stmt = $connection->prepare("SELECT * FROM files WHERE fileName = :fileName");
+        $stmt->bindParam(':fileName', $fileName);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    function addFile($fileName, $toDelete, $connection) {
+        $stmt = $connection->prepare("INSERT INTO files (fileName, toDelete) VALUES (:fileName, :toDelete)");
+        $stmt->bindParam(':fileName', $fileName);
+        $stmt->bindParam(':toDelete', $toDelete);
+        $stmt->execute();
+    }
+
+    function editDeletionDate($connection) {
+        //get all files in state 0 / 1 / 2
+        $stmt = $connection->prepare("SELECT * FROM files WHERE state < 3");
+        $stmt->execute();
+        $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        for ($i = 0; $i < count($files); $i++) {
+            $stmt = $connection->prepare("UPDATE files SET toDelete = :toDelete WHERE fileName = :fileName");
+            $stmt->bindParam(':fileName', $files[$i]["fileName"]);
+            $stmt->bindParam(':toDelete', date("Y-m-d H:i:s", strtotime("+" . KEEP_FILES_FOR . " days")));
+            $stmt->execute();
+        }
+    }
+
 ?>

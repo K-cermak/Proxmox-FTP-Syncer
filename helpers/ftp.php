@@ -50,4 +50,57 @@
         error_reporting(1);
     }
 
+
+    function getNewFiles($type) {
+        $ftp = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
+        if ($ftp === false) {
+            return;
+        }
+
+        if ($type == "list") {
+            boldMessage("All files:");
+        } else {
+            boldMessage("New files:");
+        }
+
+        $newFiles = ftp_nlist($ftp, ".");
+        $dbConnection = connectToDb(); 
+        $listedAnythigNew = false;
+
+        for ($i = 0; $i < count($newFiles); $i++) {
+            //skip folders
+            if (ftp_size($ftp, $newFiles[$i]) == -1) {
+                continue;
+            }
+
+            //skip files that are already in the database
+            if ($type != "list" && getFileData($newFiles[$i], $dbConnection) !== false) {
+                continue;
+            }
+
+            echo "    " . $newFiles[$i];
+            $listedAnythigNew = true;
+
+            //ading to DB
+            if ($type == "light" || $type == "classic") {
+                $toDeleteOn = date("Y-m-d H:i:s", strtotime("+" . KEEP_FILES_FOR . " days"));
+                addFile($newFiles[$i], $toDeleteOn, $dbConnection);
+                successMessage(" - added to the database.", false);
+            }
+
+            echo "\n";
+        }
+        ftp_close($ftp);
+
+        //when nothing found
+        if (!$listedAnythigNew) {
+            errorMessage("    Warning: No new files found.");
+            if ($type == "classic") {
+                editDeletionDate($dbConnection);
+                successMessage("    Deletion date of all files has been updated.");
+            }
+        }
+        
+    }
+
 ?>

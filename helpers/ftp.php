@@ -50,7 +50,6 @@
         error_reporting(1);
     }
 
-
     function getNewFiles($type) {
         $ftp = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
         if ($ftp === false) {
@@ -65,7 +64,7 @@
 
         $newFiles = ftp_nlist($ftp, ".");
         $dbConnection = connectToDb(); 
-        $listedAnythigNew = false;
+        $listedAnythingNew = false;
 
         for ($i = 0; $i < count($newFiles); $i++) {
             //skip folders
@@ -79,7 +78,7 @@
             }
 
             echo "    " . $newFiles[$i];
-            $listedAnythigNew = true;
+            $listedAnythingNew = true;
 
             //ading to DB
             if ($type == "light" || $type == "classic") {
@@ -93,14 +92,106 @@
         ftp_close($ftp);
 
         //when nothing found
-        if (!$listedAnythigNew) {
+        if (!$listedAnythingNew) {
             errorMessage("    Warning: No new files found.");
             if ($type == "classic") {
                 editDeletionDate($dbConnection);
                 successMessage("    Deletion date of all files has been updated.");
             }
         }
-        
     }
 
+    function getLostFiles($type) {
+        $ftp = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
+        if ($ftp === false) {
+            return;
+        }
+
+        boldMessage("Lost files:");
+
+        $dbConnection = connectToDb(); 
+        $allFiles = getFilesInState($dbConnection, 0);
+        $listedAnything = false;
+
+        for ($i = 0; $i < count($allFiles); $i++) {
+            //if file not in FTP
+            if (ftp_size($ftp, $allFiles[$i]["fileName"]) != -1) {
+                continue;
+            }
+
+            echo "    " . $allFiles[$i]["fileName"];
+            $listedAnything = true;
+
+            //editing DB
+            if ($type == "light" || $type == "classic") {
+                changeFileState($allFiles[$i]["fileName"], 5, $dbConnection);
+                successMessage(" - edited in the database.", false);
+            }
+
+            echo "\n";
+        }
+        ftp_close($ftp);
+
+        //when nothing found
+        if (!$listedAnything) {
+            successMessage("    No lost files.");
+        }
+    }
+
+    function sync() {
+        //get all files in DB with state 0
+        $dbConnection = connectToDb();
+        $files = getFilesInState($dbConnection, 0);
+
+        if (count($files) == 0) {
+            errorMessage("No files to sync.");
+            return;
+        }
+        
+        $origin = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
+        $destination = getFtpConnection(DEST_HOST, DEST_PORT, DEST_USER, DEST_PASS, DEST_PATH);
+
+        if ($origin === false || $destination === false) {
+            return;
+        }
+
+        $text = ngettext("file", "files", count($files));
+        $errors = 0;
+
+        echo "Syncing " . count($files) . " $text...\n";
+
+        for ($i = 0; $i < count($files); $i++) {
+            progressBar($i, count($files));
+            $fileName = $files[$i]["fileName"];
+            changeFileState($fileName, 1, $dbConnection);
+
+            // download file from origin to temp
+            $temp = tempnam(sys_get_temp_dir(), "syncer");
+            ftp_get($origin, $temp, $fileName, FTP_BINARY);
+            if (!file_exists($temp)) {
+                echo "\n";
+                $errors += 1;
+                errorMessage("ERROR: Unable to download the file from the ORIGIN server (File: $fileName).");
+            }
+
+            // upload file from temp to destination
+            ftp_put($destination, $fileName, $temp, FTP_BINARY);
+
+            // delete file from temp
+            unlink($temp);
+
+            changeFileState($fileName, 2, $dbConnection);
+        }
+
+        progressBar($i, count($files));
+        if ($errors == 0) {
+            echo "\n";
+            successMessage("Syncing successful.");
+        } else {
+            echo "\n";
+            errorMessage("Successfully synced " . (count($files) - $errors) . "/" . count($files) . " " . $text . ", " .  $errors . " failed.");
+        }
+
+
+    }
 ?>

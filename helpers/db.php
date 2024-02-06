@@ -68,6 +68,13 @@
         $stmt->execute();
     }
 
+    function getFilesInState($connection, $state) {
+        $stmt = $connection->prepare("SELECT * FROM files WHERE state = :state");
+        $stmt->bindParam(':state', $state);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     function editDeletionDate($connection) {
         //get all files in state 0 / 1 / 2
         $stmt = $connection->prepare("SELECT * FROM files WHERE state < 3");
@@ -80,6 +87,13 @@
             $stmt->bindParam(':toDelete', date("Y-m-d H:i:s", strtotime("+" . KEEP_FILES_FOR . " days")));
             $stmt->execute();
         }
+    }
+
+    function changeFileState($fileName, $state, $connection) {
+        $stmt = $connection->prepare("UPDATE files SET state = :state WHERE fileName = :fileName");
+        $stmt->bindParam(':fileName', $fileName);
+        $stmt->bindParam(':state', $state);
+        $stmt->execute();
     }
 
 ?>

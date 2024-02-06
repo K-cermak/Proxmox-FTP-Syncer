@@ -1,6 +1,7 @@
 <?php
     //todo:
-        // sync, autorun
+        // delete old
+        //autorun - conn, discovery, sync, delete old
         // fix not completed
 
         // emails
@@ -36,9 +37,12 @@
     } else if ($arg == "discovery") {
         $type = $argv[2] ?? "safe";
         getNewFiles($type);
+        getLostFiles($type);
+    } else if ($arg == "sync") {
+        sync();
+    } else {
+        errorMessage("ERROR: Invalid command line argument.");
     }
-
-    //job - conn, discovery, sync, delete old
 
 
 ?>

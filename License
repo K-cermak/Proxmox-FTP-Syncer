@@ -1,4 +1,4 @@
-#### This project is not affiliated with Proxmox Server Solutions GmbH. This is just a simple extension for backing up Proxmox VE to FTP, which is slightly impractical without Proxmox Backup Server.
+#### This project is not affiliated with Proxmox Server Solutions GmbH. This is just a simple extension for backing up Proxmox VE to FTP, which is not possible by default.
 
 <br>
 

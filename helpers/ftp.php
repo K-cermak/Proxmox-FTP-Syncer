@@ -32,8 +32,12 @@
 
 
     function getNewFiles($type) {
+        global $emailStats;
+
         $ftp = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
         if ($ftp === false) {
+            $emailStats["isok"] = false;
+            $emailStats["errors"][] = "Unable to connect to the ORIGIN server.";
             return;
         }
 
@@ -68,6 +72,7 @@
                 } else {
                     $toDeleteOn = date("Y-m-d H:i:s", strtotime("+" . KEEP_FILES_FOR . " days"));
                 }
+                $emailStats["detected"] += 1;
                 addFile($dbConnection, $newFiles[$i], $toDeleteOn);
                 successMessage(" - added to the database.", false);
             }
@@ -84,6 +89,8 @@
         //when nothing found
         if (!$listedAnythingNew) {
             errorMessage("    Warning: No new files found.");
+            $emailStats["isok"] = false;
+            $emailStats["errors"][] = "No new files found.";
             if ($type == "classic" && EXTEND_BACKUP_ON_ERROR != 0) {
                 editDeletionDate($dbConnection, EXTEND_BACKUP_ON_ERROR);
                 successMessage("    Deletion date of all files has been updated.");
@@ -93,8 +100,12 @@
 
 
     function getLostFiles($type) {
+        global $emailStats;
+
         $ftp = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
         if ($ftp === false) {
+            $emailStats["isok"] = false;
+            $emailStats["errors"][] = "Unable to connect to the ORIGIN server.";
             return;
         }
 
@@ -115,6 +126,8 @@
 
             //editing DB
             if ($type == "light" || $type == "classic") {
+                $emailStats["lost"] += 1;
+                $emailStats["isok"] = false;
                 changeFileState($dbConnection, $allFiles[$i]["fileName"], 5);
                 successMessage(" - edited in the database.", false);
             }
@@ -131,6 +144,8 @@
 
 
     function sync() {
+        global $emailStats;
+
         //get all files in DB with state 0
         $dbConnection = connectToDb();
         $files = getFilesInState($dbConnection, 0);
@@ -144,6 +159,8 @@
         $destination = getFtpConnection(DEST_HOST, DEST_PORT, DEST_USER, DEST_PASS, DEST_PATH);
 
         if ($origin === false || $destination === false) {
+            $emailStats["isok"] = false;
+            $emailStats["errors"][] = "Unable to connect to the ORIGIN or DESTINATION server.";
             return;
         }
 
@@ -175,6 +192,7 @@
             // delete file from temp
             unlink($temp);
 
+            $emailStats["uploaded"] += 1;
             changeFileState($dbConnection, $fileName, 2);
         }
 
@@ -185,12 +203,16 @@
         if ($errors == 0) {
             successMessage("Syncing successful.");
         } else {
+            $emailStats["isok"] = false;
+            $emailStats["errors"][] = "Syncing successful, but " . $errors . " files failed.";
             errorMessage("Successfully synced " . (count($files) - $errors) . "/" . count($files) . " " . $text . ", " .  $errors . " failed.");
         }
     }
 
 
     function deleteOld() {
+        global $emailStats;
+
         $dbConnection = connectToDb();
         $files = getFilesToDelete($dbConnection, 2);
 
@@ -201,6 +223,7 @@
 
         $ftp = getFtpConnection(DEST_HOST, DEST_PORT, DEST_USER, DEST_PASS, DEST_PATH);
         if ($ftp === false) {
+            errorMessage("Unable to connect to the DESTINATION server.");
             return;
         }
 
@@ -223,6 +246,7 @@
                 continue;
             }
 
+            $emailStats["deleted"] += 1;
             changeFileState($dbConnection, $fileName, 4);
         }
 
@@ -233,6 +257,8 @@
         if ($errors == 0) {
             successMessage("Deletion successful.");
         } else {
+            $emailStats["isok"] = false;
+            $emailStats["errors"][] = "Deletion successful, but " . $errors . " files failed.";
             errorMessage("Successfully deleted " . (count($files) - $errors) . "/" . count($files) . " " . $text . ", " .  $errors . " failed.");
         }
 

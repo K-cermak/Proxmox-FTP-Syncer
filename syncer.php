@@ -1,11 +1,16 @@
 <?php
-    //todo:
-        // emails
-        // license, README, sources
-
-
     //disable time limit
     set_time_limit(0);
+
+    //for email
+    $emailStats = array(
+        "detected" => 0,
+        "lost" => 0,
+        "uploaded" => 0,
+        "deleted" => 0,
+        "isok" => true,
+        "errors" => []
+    );
 
     require "settings.php";
     require CREDENTIALS_FILE;
@@ -20,7 +25,6 @@
 
     copyright();
     checkInstalledSqlite();
-
 
     $arg = $argv[1] ?? '?';
     if ($arg == "?" || $arg == "help") {
@@ -46,11 +50,16 @@
     } else if ($arg == "delete") {
         deleteOld();
     } else if ($arg == "autorun") {
-        $type = "classic";
-        getNewFiles($type);
-        getLostFiles($type);
+        $start = microtime(true);
+        getNewFiles("classic");
+        getLostFiles("classic");
         sync();
         deleteOld();
+
+        $end = microtime(true);
+        $emailStats["time"] = $end - $start;
+        sendReport();        
+
     } else if ($arg == "extend-backup") {
         $days = $argv[2] ?? 0;
         extendBackup($days);

@@ -16,5 +16,5 @@
     define('EMAIL_HOST', 'smtp.example.com');
     define('EMAIL_PORT', '465');
     define('EMAIL_NAME', 'NoReply');
-    define('SEND_TO', 'john@example.com')
+    define('SEND_TO', 'john@example.com') // multiple emails separated by comma, no spaces
 ?>

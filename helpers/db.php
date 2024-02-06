@@ -121,4 +121,38 @@
         }
     }
 
+    function fixErrors($fixing) {
+        if ($fixing != "upload" && $fixing != "delete") {
+            errorMessage("ERROR: Invalid argument. Use 'upload' or 'delete'.");
+            return;
+        }
+
+        if ($fixing == "upload") {
+            $state = 1;
+        } else if ($fixing == "delete") {
+            $state = 3;
+        }
+
+        //get all files in state 1 / 3
+        $connection = connectToDb();
+        $stmt = $connection->prepare("SELECT * FROM files WHERE state = :state");
+        $stmt->bindParam(':state', $state);
+        $stmt->execute();
+        $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($files) == 0) {
+            successMessage("Database is clean. No errors found.");
+            return;
+        }
+
+        for ($i = 0; $i < count($files); $i++) {
+            $fileName = $files[$i]["fileName"];
+            changeFileState($fileName, $state - 1, $connection);
+        }
+
+        $text = ngettext("file", "files", count($files));
+        successMessage("All files in state '". getState($state) ."' are now in state '" . getState($state - 1) . "'. (" . count($files) . " " . $text . ")");
+        echo "Please run 'php syncer.php autorun' to continue.\n";
+    }
+
 ?>

@@ -86,6 +86,11 @@
                 addFile($newFiles[$i], $toDeleteOn, $dbConnection);
                 successMessage(" - added to the database.", false);
             }
+            if ($type == "list") {
+                //print state and deletion date
+                $fileData = getFileData($newFiles[$i], $dbConnection);
+                echo " | State: " . getState($fileData["state"]) . ", Deletion date: " . $fileData["toDelete"];
+            }
 
             echo "\n";
         }
@@ -98,6 +103,22 @@
                 editDeletionDate($dbConnection, EXTEND_BACKUP_ON_ERROR);
                 successMessage("    Deletion date of all files has been updated.");
             }
+        }
+    }
+
+    function getState($state) {
+        if ($state == 0) {
+            return "New";
+        } else if ($state == 1) {
+            return "Syncing";
+        } else if ($state == 2) {
+            return "Synced";
+        } else if ($state == 3) {
+            return "Deleting from DESTINATION server";
+        } else if ($state == 4) {
+            return "Deleted from DESTINATION server";
+        } else if ($state == 5) {
+            return "Error / Lost";
         }
     }
 

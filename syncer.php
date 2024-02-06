@@ -1,8 +1,7 @@
 <?php
     //todo:
-        // fix errors
         // emails
-        // license, README.. 
+        // license, README..
 
 
     //disable time limit
@@ -48,6 +47,9 @@
     } else if ($arg == "extend-backup") {
         $days = $argv[2] ?? 0;
         extendBackup($days);
+    } else if ($arg == "fix") {
+        $fixing = $argv[2] ?? "-";
+        fixErrors($fixing);
     } else {
         errorMessage("ERROR: Invalid command line argument.");
         getHelp();

@@ -63,7 +63,11 @@
 
             //ading to DB
             if ($type == "light" || $type == "classic") {
-                $toDeleteOn = date("Y-m-d H:i:s", strtotime("+" . KEEP_FILES_FOR . " days"));
+                if (KEEP_FILES_FOR == 0) {
+                    $toDeleteOn = "9999-12-31 23:59:59";
+                } else {
+                    $toDeleteOn = date("Y-m-d H:i:s", strtotime("+" . KEEP_FILES_FOR . " days"));
+                }
                 addFile($dbConnection, $newFiles[$i], $toDeleteOn);
                 successMessage(" - added to the database.", false);
             }
@@ -80,7 +84,7 @@
         //when nothing found
         if (!$listedAnythingNew) {
             errorMessage("    Warning: No new files found.");
-            if ($type == "classic") {
+            if ($type == "classic" && EXTEND_BACKUP_ON_ERROR != 0) {
                 editDeletionDate($dbConnection, EXTEND_BACKUP_ON_ERROR);
                 successMessage("    Deletion date of all files has been updated.");
             }

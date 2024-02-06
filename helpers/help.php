@@ -47,7 +47,7 @@
 
         //sync
         boldMessage("       sync", false);
-        echo " - synchronize files to DESTINATION\n";
+        echo " - synchronize files to DESTINATION server\n";
     }
 
 

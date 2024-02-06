@@ -1,18 +1,23 @@
 <?php
     //todo:
         // emails
-        // license, README..
+        // license, README, sources
 
 
     //disable time limit
     set_time_limit(0);
 
-    include "settings.php";
-    include CREDENTIALS_FILE;
-    include "helpers/help.php";
-    include "helpers/terminal.php";
-    include "helpers/db.php";
-    include "helpers/ftp.php";
+    require "settings.php";
+    require CREDENTIALS_FILE;
+    require "helpers/help.php";
+    require "helpers/terminal.php";
+    require "helpers/db.php";
+    require "helpers/ftp.php";
+    require 'email/Exception.php';
+    require 'email/PHPMailer.php';
+    require 'email/SMTP.php';
+    require 'helpers/email.php';
+
     copyright();
     checkInstalledSqlite();
 
@@ -30,6 +35,8 @@
         checkConnection();
     } else if ($arg == "check-settings") {
         checkSettings();
+    } else if ($arg == "check-email") {
+        testEmail();
     } else if ($arg == "discovery") {
         $type = $argv[2] ?? "safe";
         getNewFiles($type);

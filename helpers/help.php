@@ -35,6 +35,12 @@
         boldMessage("       extend-backup", false);
         echo " [DAYS] - extend the backup for DAYS (negative will decrease the deletion date)\n";
 
+        //fix
+        boldMessage("       fix", false);
+        echo " [upload|delete] - fix errors in the database\n";
+        echo "            upload - change state of all files in state '" . getState(1) . "' to '" . getState(0) . "'\n";
+        echo "            delete - change state of all files in state '" . getState(3) . "' to '" . getState(2) . "'\n";
+        
         //help
         boldMessage("       help", false);
         echo " - display this help\n";
@@ -43,6 +49,36 @@
         boldMessage("       sync", false);
         echo " - synchronize files to DESTINATION\n";
     }
+
+
+    function checkInstalledSqlite() {
+        if (!extension_loaded('pdo_sqlite')) {
+            errorMessage("ERROR: PDO - SQLite extension is not installed. Please install it and try again.");
+            exit(1);
+        }
+    }
+
+
+    function checkConnection() {
+        echo "Checking connection to the ORIGIN server... ";
+        $origin = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
+
+        if ($origin !== false) {
+            successMessage("Connection to the ORIGIN server successful.");
+        }
+
+        echo "Checking connection to the DESTINATION server... ";
+        $destination = getFtpConnection(DEST_HOST, DEST_PORT, DEST_USER, DEST_PASS, DEST_PATH);
+
+        if ($destination !== false) {
+            successMessage("Connection to the DESTINATION server successful.");
+        }
+
+        if (ORIGIN_HOST == DEST_HOST && ORIGIN_PORT == DEST_PORT && ORIGIN_USER == DEST_USER && ORIGIN_PASS == DEST_PASS && ORIGIN_PATH == DEST_PATH) {
+            errorMessage("WARNING: The ORIGIN and DESTINATION servers are the same.");
+        }
+    }
+
 
     function checkSettings() {
         //if KEEP_FILES_FOR is not number, is not set or is less than 0, or is decimal
@@ -65,6 +101,23 @@
             $days = EXTEND_BACKUP_ON_ERROR . " " . ngettext("day", "days", EXTEND_BACKUP_ON_ERROR);
             successMessage("PAUSE_SYNC_ON_ERROR is set to $days.", false);
             echo " Deleting files will be delayed for $days if synchronization fails.\n";
+        }
+    }
+    
+
+    function getState($state) {
+        if ($state == 0) {
+            return "New";
+        } else if ($state == 1) {
+            return "Syncing";
+        } else if ($state == 2) {
+            return "Synced";
+        } else if ($state == 3) {
+            return "Deleting from DESTINATION server";
+        } else if ($state == 4) {
+            return "Deleted from DESTINATION server";
+        } else if ($state == 5) {
+            return "Error / Lost";
         }
     }
 ?>

@@ -6,12 +6,14 @@
         echo "-----------\n";
     }
 
+
     function errorMessage($message, $newLine = true) {
         echo "\033[31m$message \033[0m";
         if ($newLine) {
             echo "\n";
         }
     }
+
 
     function successMessage($message, $newLine = true) {
         echo "\033[32m$message\033[0m";
@@ -20,6 +22,7 @@
         }
     }
 
+
     function boldMessage($message, $newLine = true) {
         echo "\033[1m$message\033[0m";
         if ($newLine) {
@@ -27,6 +30,7 @@
         }
     }
 
+    
     function progressBar($done, $total) {
         $perc = floor(($done / $total) * 100);
         $left = 100 - $perc;

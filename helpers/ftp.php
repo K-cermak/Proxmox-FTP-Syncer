@@ -1,24 +1,4 @@
 <?php
-    function checkConnection() {
-        echo "Checking connection to the ORIGIN server... ";
-        $origin = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
-
-        if ($origin !== false) {
-            successMessage("Connection to the ORIGIN server successful.");
-        }
-
-        echo "Checking connection to the DESTINATION server... ";
-        $destination = getFtpConnection(DEST_HOST, DEST_PORT, DEST_USER, DEST_PASS, DEST_PATH);
-
-        if ($destination !== false) {
-            successMessage("Connection to the DESTINATION server successful.");
-        }
-
-        if (ORIGIN_HOST == DEST_HOST && ORIGIN_PORT == DEST_PORT && ORIGIN_USER == DEST_USER && ORIGIN_PASS == DEST_PASS && ORIGIN_PATH == DEST_PATH) {
-            errorMessage("WARNING: The ORIGIN and DESTINATION servers are the same.");
-        }
-    }
-
     function getFtpConnection($host, $port, $user, $pass, $path) {
         //disable error reporting
         error_reporting(0);
@@ -50,6 +30,7 @@
         error_reporting(1);
     }
 
+
     function getNewFiles($type) {
         $ftp = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
         if ($ftp === false) {
@@ -73,7 +54,7 @@
             }
 
             //skip files that are already in the database
-            if ($type != "list" && getFileData($newFiles[$i], $dbConnection) !== false) {
+            if ($type != "list" && getFileData($dbConnection, $newFiles[$i]) !== false) {
                 continue;
             }
 
@@ -83,12 +64,12 @@
             //ading to DB
             if ($type == "light" || $type == "classic") {
                 $toDeleteOn = date("Y-m-d H:i:s", strtotime("+" . KEEP_FILES_FOR . " days"));
-                addFile($newFiles[$i], $toDeleteOn, $dbConnection);
+                addFile($dbConnection, $newFiles[$i], $toDeleteOn);
                 successMessage(" - added to the database.", false);
             }
             if ($type == "list") {
                 //print state and deletion date
-                $fileData = getFileData($newFiles[$i], $dbConnection);
+                $fileData = getFileData($dbConnection, $newFiles[$i]);
                 echo " | State: " . getState($fileData["state"]) . ", Deletion date: " . $fileData["toDelete"];
             }
 
@@ -106,21 +87,6 @@
         }
     }
 
-    function getState($state) {
-        if ($state == 0) {
-            return "New";
-        } else if ($state == 1) {
-            return "Syncing";
-        } else if ($state == 2) {
-            return "Synced";
-        } else if ($state == 3) {
-            return "Deleting from DESTINATION server";
-        } else if ($state == 4) {
-            return "Deleted from DESTINATION server";
-        } else if ($state == 5) {
-            return "Error / Lost";
-        }
-    }
 
     function getLostFiles($type) {
         $ftp = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
@@ -145,7 +111,7 @@
 
             //editing DB
             if ($type == "light" || $type == "classic") {
-                changeFileState($allFiles[$i]["fileName"], 5, $dbConnection);
+                changeFileState($dbConnection, $allFiles[$i]["fileName"], 5);
                 successMessage(" - edited in the database.", false);
             }
 
@@ -159,13 +125,14 @@
         }
     }
 
+
     function sync() {
         //get all files in DB with state 0
         $dbConnection = connectToDb();
         $files = getFilesInState($dbConnection, 0);
 
         if (count($files) == 0) {
-            errorMessage("No files to sync.");
+            errorMessage("\nNo files to sync.");
             return;
         }
         
@@ -185,14 +152,14 @@
         for ($i = 0; $i < count($files); $i++) {
             progressBar($i, count($files));
             $fileName = $files[$i]["fileName"];
-            changeFileState($fileName, 1, $dbConnection);
+            changeFileState($dbConnection, $fileName, 1);
 
             // download file from origin to temp
             $temp = tempnam(sys_get_temp_dir(), "syncer");
             ftp_get($origin, $temp, $fileName, FTP_BINARY);
             if (!file_exists($temp)) {
                 $errors += 1;
-                changeFileState($fileName, 5, $dbConnection);
+                changeFileState($dbConnection, $fileName, 5);
                 echo "\n";
                 errorMessage("ERROR: Unable to download the file from the ORIGIN server (File: $fileName).");
                 continue;
@@ -204,7 +171,7 @@
             // delete file from temp
             unlink($temp);
 
-            changeFileState($fileName, 2, $dbConnection);
+            changeFileState($dbConnection, $fileName, 2);
         }
 
         progressBar(count($files), count($files));
@@ -218,9 +185,10 @@
         }
     }
 
+
     function deleteOld() {
-        $connection = connectToDb();
-        $files = filesToDelete($connection, 2);
+        $dbConnection = connectToDb();
+        $files = getFilesToDelete($dbConnection, 2);
 
         if (count($files) == 0) {
             errorMessage("No files to delete.");
@@ -235,23 +203,23 @@
         $text = ngettext("file", "files", count($files));
         $errors = 0;
 
-        echo "Deleting " . count($files) . " $text...\n";
+        echo "\nDeleting " . count($files) . " $text...\n";
         echo "Started at: " . date("Y-m-d H:i:s") . "\n";
 
         for ($i = 0; $i < count($files); $i++) {
             progressBar($i, count($files));
             $fileName = $files[$i]["fileName"];
-            changeFileState($fileName, 3, $connection);
+            changeFileState($dbConnection, $fileName, 3);
 
             // delete file from destination
             if (!ftp_delete($ftp, $fileName)) {
                 $errors += 1;
-                changeFileState($fileName, 5, $connection);
+                changeFileState($dbConnection, $fileName, 5);
                 errorMessage("ERROR: Unable to delete the file from the DESTINATION server (File: $fileName).");
                 continue;
             }
 
-            changeFileState($fileName, 4, $connection);
+            changeFileState($dbConnection, $fileName, 4);
         }
 
         progressBar(count($files), count($files));

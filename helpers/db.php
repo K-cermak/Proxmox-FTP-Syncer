@@ -96,4 +96,12 @@
         $stmt->execute();
     }
 
+    function filesToDelete($connection) {
+        $time = date("Y-m-d H:i:s");
+        $stmt = $connection->prepare("SELECT * FROM files WHERE toDelete <= :time AND state = 2");
+        $stmt->bindParam(':time', $time);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
 ?>

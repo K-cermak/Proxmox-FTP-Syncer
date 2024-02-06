@@ -159,6 +159,7 @@
         $errors = 0;
 
         echo "Syncing " . count($files) . " $text...\n";
+        echo "Started at: " . date("Y-m-d H:i:s") . "\n";
 
         for ($i = 0; $i < count($files); $i++) {
             progressBar($i, count($files));
@@ -169,9 +170,11 @@
             $temp = tempnam(sys_get_temp_dir(), "syncer");
             ftp_get($origin, $temp, $fileName, FTP_BINARY);
             if (!file_exists($temp)) {
-                echo "\n";
                 $errors += 1;
+                changeFileState($fileName, 5, $dbConnection);
+                echo "\n";
                 errorMessage("ERROR: Unable to download the file from the ORIGIN server (File: $fileName).");
+                continue;
             }
 
             // upload file from temp to destination
@@ -183,13 +186,61 @@
             changeFileState($fileName, 2, $dbConnection);
         }
 
-        progressBar($i, count($files));
+        progressBar(count($files), count($files));
+        ftp_close($origin);
+        echo "\nFinished at: " . date("Y-m-d H:i:s") . "\n";
+        
         if ($errors == 0) {
-            echo "\n";
             successMessage("Syncing successful.");
         } else {
-            echo "\n";
             errorMessage("Successfully synced " . (count($files) - $errors) . "/" . count($files) . " " . $text . ", " .  $errors . " failed.");
+        }
+    }
+
+    function deleteOld() {
+        $connection = connectToDb();
+        $files = filesToDelete($connection, 2);
+
+        if (count($files) == 0) {
+            errorMessage("No files to delete.");
+            return;
+        }
+
+        $ftp = getFtpConnection(DEST_HOST, DEST_PORT, DEST_USER, DEST_PASS, DEST_PATH);
+        if ($ftp === false) {
+            return;
+        }
+
+        $text = ngettext("file", "files", count($files));
+        $errors = 0;
+
+        echo "Deleting " . count($files) . " $text...\n";
+        echo "Started at: " . date("Y-m-d H:i:s") . "\n";
+
+        for ($i = 0; $i < count($files); $i++) {
+            progressBar($i, count($files));
+            $fileName = $files[$i]["fileName"];
+            changeFileState($fileName, 3, $connection);
+
+            // delete file from destination
+            if (!ftp_delete($ftp, $fileName)) {
+                $errors += 1;
+                changeFileState($fileName, 5, $connection);
+                errorMessage("ERROR: Unable to delete the file from the DESTINATION server (File: $fileName).");
+                continue;
+            }
+
+            changeFileState($fileName, 4, $connection);
+        }
+
+        progressBar(count($files), count($files));
+        ftp_close($ftp);
+        echo "\nFinished at: " . date("Y-m-d H:i:s") . "\n";
+
+        if ($errors == 0) {
+            successMessage("Deletion successful.");
+        } else {
+            errorMessage("Successfully deleted " . (count($files) - $errors) . "/" . count($files) . " " . $text . ", " .  $errors . " failed.");
         }
 
 

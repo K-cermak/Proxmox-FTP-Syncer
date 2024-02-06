@@ -15,6 +15,10 @@
         echo " - create a new database";
         errorMessage(" (WARNING: This will delete all data in the current database!)");
 
+        //delete
+        boldMessage("       delete", false);
+        echo " - delete old files\n";
+
         //discovery
         boldMessage("       discovery", false);
         echo " [list|safe|light|classic] - discover new files\n";
@@ -26,6 +30,10 @@
         //help
         boldMessage("       help", false);
         echo " - display this help\n";
+
+        //sync
+        boldMessage("       sync", false);
+        echo " - synchronize files to DESTINATION\n";
     }
 
     function checkSettings() {

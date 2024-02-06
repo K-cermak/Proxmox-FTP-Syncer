@@ -1,8 +1,6 @@
 <?php
     //todo:
-        // autorun - conn, discovery, sync, delete old
         // fix errors
-
         // emails
         // license, README.. 
 
@@ -41,6 +39,15 @@
         sync();
     } else if ($arg == "delete") {
         deleteOld();
+    } else if ($arg == "autorun") {
+        $type = "classic";
+        getNewFiles($type);
+        getLostFiles($type);
+        sync();
+        deleteOld();
+    } else if ($arg == "extend-backup") {
+        $days = $argv[2] ?? 0;
+        extendBackup($days);
     } else {
         errorMessage("ERROR: Invalid command line argument.");
         getHelp();

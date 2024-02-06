@@ -75,7 +75,7 @@
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    function editDeletionDate($connection) {
+    function editDeletionDate($connection, $days) {
         //get all files in state 0 / 1 / 2
         $stmt = $connection->prepare("SELECT * FROM files WHERE state < 3");
         $stmt->execute();
@@ -84,7 +84,8 @@
         for ($i = 0; $i < count($files); $i++) {
             $stmt = $connection->prepare("UPDATE files SET toDelete = :toDelete WHERE fileName = :fileName");
             $stmt->bindParam(':fileName', $files[$i]["fileName"]);
-            $stmt->bindParam(':toDelete', date("Y-m-d H:i:s", strtotime("+" . KEEP_FILES_FOR . " days")));
+            $toDelete = date("Y-m-d H:i:s", strtotime("+" . $days . " days", strtotime($files[$i]["toDelete"])));
+            $stmt->bindParam(':toDelete', $toDelete);
             $stmt->execute();
         }
     }
@@ -102,6 +103,22 @@
         $stmt->bindParam(':time', $time);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    function extendBackup($days) {
+        //if days is not number, is not set or is less than 0, or is decimal
+        if (!is_numeric($days) || $days != round($days)) {
+            errorMessage("ERROR: Days is not set, is not a number or is decimal.");
+            return;
+        }
+
+        $connection = connectToDb();
+        editDeletionDate($connection, $days);
+        if ($days > 0) {
+            successMessage("Backup extended for $days " . ngettext("day", "days", $days) . ".");
+        } else {
+            successMessage("Backup decreased for " . abs($days) . " " . ngettext("day", "days", abs($days)) . ".");
+        }
     }
 
 ?>

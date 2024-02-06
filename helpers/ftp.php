@@ -95,7 +95,7 @@
         if (!$listedAnythingNew) {
             errorMessage("    Warning: No new files found.");
             if ($type == "classic") {
-                editDeletionDate($dbConnection);
+                editDeletionDate($dbConnection, EXTEND_BACKUP_ON_ERROR);
                 successMessage("    Deletion date of all files has been updated.");
             }
         }

@@ -1,5 +1,4 @@
 ## Basic settings
-
 - Go to the `settings.php file` and set the following variables:
 
     - `CREDENTIALS_FILE` - Path to the file with login credentials.

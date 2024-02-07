@@ -26,14 +26,6 @@
 <br>
 
 ## FTP Installation
-
-- Připojte se k Proxmoxu (bare metal) přes SSH či přes službu v Proxmoxu.
-- Aktualizujte seznam balíčků: apt-get update
-- Nainstalujte vsftpd: apt-get install vsftpd
-- Přejděte do konfiguračního souboru: nano /etc/vsftpd.conf. Místo nano můžete použít jiný textový editor.
-- Nastavte konfiguraci podle následujícího příkladu. Pokud řádek neexistuje, přidejte jej. Pokud existuje, upravte jej.
-
-
 - Connect to Proxmox (bare metal) via SSH or through the service in Proxmox.
 - Update the package list: `apt-get update`
 - Install vsftpd: `apt-get install vsftpd`
@@ -46,7 +38,7 @@ local_enable=YES
 write_enable=NO
 chroot_local_user=YES
 allow_writeable_chroot=YES
-local_root=/media/drive/dump ; upravte cestu podle Vašeho nastavení a přidejte /dump na konec
+local_root=/media/drive/dump    #!adjust the path according to your settings and add /dump at the end
 user_sub_token=$USER
 ```
 

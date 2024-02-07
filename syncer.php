@@ -1,4 +1,8 @@
 <?php
+    /*
+        Proxmox Syncer v1.0 by Karel Cermak | karlosoft.com
+    */
+
     //disable time limit
     set_time_limit(0);
 
@@ -25,6 +29,7 @@
 
     copyright();
     checkInstalledSqlite();
+    checkInstalledFtp();
 
     $arg = $argv[1] ?? '?';
     if ($arg == "?" || $arg == "help") {

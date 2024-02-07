@@ -59,6 +59,14 @@
     }
 
 
+    function checkInstalledFtp() {
+        if (!extension_loaded('ftp')) {
+            errorMessage("ERROR: FTP extension is not installed. Please install it and try again.");
+            exit(1);
+        }
+    }
+
+
     function checkConnection() {
         echo "Checking connection to the ORIGIN server... ";
         $origin = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);

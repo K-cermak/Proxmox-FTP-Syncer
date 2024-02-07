@@ -10,6 +10,10 @@
         boldMessage("       check-connection", false);
         echo " - check the connection to the FTP servers\n";
 
+        //check email
+        boldMessage("       check-email", false);
+        echo " - send test email\n";
+
         //check settings
         boldMessage("       check-settings", false);
         echo " - check the settings\n";

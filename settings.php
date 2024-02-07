@@ -1,5 +1,5 @@
 <?php
-    define("CREDENTIALS_FILE", "credentials-my.php");
+    define("CREDENTIALS_FILE", "credentials.php");
     define("DB_FILE", "/crons/db.sqlite"); //should be absolute path
     
     define("KEEP_FILES_FOR", 90); //after sync files will be kept for 90 days, 0 will keep files forever

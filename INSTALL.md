@@ -29,7 +29,7 @@
 - Connect to Proxmox (bare metal) via SSH or through the service in Proxmox.
 - Update the package list: `apt-get update`
 - Install vsftpd: `apt-get install vsftpd`
-- Go to the configuration file: `nano /etc/vsftpd.conf`. Instead of nano, you can use another text editor ().
+- Go to the configuration file: `nano /etc/vsftpd.conf`. Instead of nano, you can use another text editor.
 - Set the configuration according to the following example. If the line does not exist, add it. If it exists, uncomment it and modify it if needed.
 
 ```

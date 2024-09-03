@@ -1,6 +1,6 @@
 <?php
     function copyright() {
-        echo "\033[36mProxmox Syncer v1.0\n";
+        echo "\033[36mProxmox Syncer v1.1\n";
         echo "Developed by: Karel Cermak | karlosoft.com\n";
         echo "Licensed under the MIT License.\n\033[0m";
         echo "-----------\n";

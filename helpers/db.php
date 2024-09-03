@@ -127,8 +127,8 @@
 
 
     function fixErrors($fixing) {
-        if ($fixing != "upload" && $fixing != "delete") {
-            errorMessage("ERROR: Invalid argument. Use 'upload' or 'delete'.");
+        if ($fixing != "upload" && $fixing != "delete" && $fixing != "error") {
+            errorMessage("ERROR: Invalid argument. Use 'upload' or 'delete' or 'error'.");
             return;
         }
 
@@ -136,9 +136,11 @@
             $state = 1;
         } else if ($fixing == "delete") {
             $state = 3;
+        } else {
+            $state = 5;
         }
 
-        //get all files in state 1 / 3
+        //get all files in state 1 / 3 / 5
         $connection = connectToDb();
         $stmt = $connection->prepare("SELECT * FROM files WHERE state = :state");
         $stmt->bindParam(':state', $state);
@@ -150,13 +152,18 @@
             return;
         }
 
+        $newState = $state - 1;
+        if ($state == 5) {
+            $newState = 0;
+        }
+
         for ($i = 0; $i < count($files); $i++) {
             $fileName = $files[$i]["fileName"];
-            changeFileState($fileName, $state - 1, $connection);
+            changeFileState($connection, $fileName, $newState);
         }
 
         $text = ngettext("file", "files", count($files));
-        successMessage("All files in state '". getState($state) ."' are now in state '" . getState($state - 1) . "'. (" . count($files) . " " . $text . ")");
+        successMessage("All files in state '". getState($state) ."' are now in state '" . getState($newState) . "'. (" . count($files) . " " . $text . ")");
         echo "Please run 'php syncer.php autorun' to continue.\n";
     }
 

@@ -41,9 +41,10 @@
 
         //fix
         boldMessage("       fix", false);
-        echo " [upload|delete] - fix errors in the database\n";
+        echo " [upload|delete|error] - fix errors in the database\n";
         echo "            upload - change state of all files in state '" . getState(1) . "' to '" . getState(0) . "'\n";
         echo "            delete - change state of all files in state '" . getState(3) . "' to '" . getState(2) . "'\n";
+        echo "            error - change state of all files in state '" . getState(5) . "' to '" . getState(0) . "'\n";
         
         //help
         boldMessage("       help", false);

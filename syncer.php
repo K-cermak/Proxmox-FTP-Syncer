@@ -1,6 +1,6 @@
 <?php
     /*
-        Proxmox Syncer v1.0 by Karel Cermak | karlosoft.com
+        Proxmox Syncer v1.1 by Karel Cermak | karlosoft.com
     */
 
     //disable time limit

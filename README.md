@@ -20,7 +20,7 @@ By Karel Cermak | [Karlosoft](https://karlosoft.com).
 ## What can it do?
 - Move backups from Proxmox to a remote server using FTP.
 - Automatically remove old backups from FTP.
-- Email notifications for successful and unsuccessful backups.
+- Email or Discord notifications for successful and unsuccessful backups.
 - Automatically delay the removal of old backups when new backups are unavailable (which may indicate a problem).
 - Simple command line control and easy connection to CRON.
 

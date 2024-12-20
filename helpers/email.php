@@ -14,35 +14,31 @@
     }
 
     function sendReport() {
-        global $emailStats;
-        if (SEND_EMAIL == "no") {
-            return;
-        }
-        if (SEND_EMAIL == "on_error" && $emailStats["isok"]) {
+        global $syncStats;
+        if ((SEND_EMAIL == "no") || (SEND_EMAIL == "on_error" && $syncStats["isok"])) {
             return;
         }
 
-        //convert time to h:m:s
-        $emailStats["time"] = gmdate("H:i:s", $emailStats["time"]);
+        $syncStats["time"] = gmdate("H:i:s", $syncStats["time"]);
 
-        if ($emailStats["isok"]) {
-            $subject = "Proxmox Syncer Report";
+        if ($syncStats["isok"]) {
+            $subject = "✅ Proxmox Syncer Report";
             $data = "Proxmox Syncer ended <b style='color:green;'>successfully</b>.<br><br>";
-            $data .= "Time: " . $emailStats["time"] . "<br>";
-            $data .= "Detected files: " . $emailStats["detected"] . "<br>";
-            $data .= "Lost files: " . $emailStats["lost"] . "<br>";
-            $data .= "Uploaded files: " . $emailStats["uploaded"] . "<br>";
-            $data .= "Deleted files: " . $emailStats["deleted"] . "<br>";
         } else {
-            $subject = "CAUTION: Proxmox Syncer ended with errors";
+            $subject = "❌ WARNING: Proxmox Syncer ended with errors";
             $data = "Proxmox Syncer ended with <b style='color:red;'>errors</b>.<br><br>";
-            $data .= "Time: " . $emailStats["time"] . "<br>";
-            $data .= "Detected files: " . $emailStats["detected"] . "<br>";
-            $data .= "Lost files: " . $emailStats["lost"] . "<br>";
-            $data .= "Uploaded files: " . $emailStats["uploaded"] . "<br>";
-            $data .= "Deleted files: " . $emailStats["deleted"] . "<br><br>";
+        }
+
+        $data .= "Started: " . $syncStats["started"] . "<br>";
+        $data .= "Duration: " . $syncStats["time"] . "<br>";
+        $data .= "Detected Files: " . $syncStats["detected"] . "<br>";
+        $data .= "Lost Files: " . $syncStats["lost"] . "<br>";
+        $data .= "Uploaded Files: " . $syncStats["uploaded"] . "<br>";
+        $data .= "Deleted Files: " . $syncStats["deleted"] . "<br>";
+
+        if (!$syncStats["isok"]) {
             $data .= "<b>Errors:</b> <br>";
-            foreach ($emailStats["errors"] as $error) {
+            foreach ($syncStats["errors"] as $error) {
                 $data .= "    " . $error . "<br>";
             }
         }
@@ -84,8 +80,8 @@
         if (!$mail->send()) {
             errorMessage($mail->ErrorInfo);
             return false;
-        } else {
-            return true;
         }
+
+        return true;
     } 
 ?>

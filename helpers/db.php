@@ -1,12 +1,11 @@
 <?php
     /* DATABASE */
-    function build() {
+    function buildDatabase() {
         if (!canDelete()) {
             return;
         }
 
-        //state = 0 - discovered, 1 - uploading, 2 - uploaded, 3 - deleting, 4 - deleted, 5 - lost
-
+        //state: 0 - discovered, 1 - uploading, 2 - uploaded, 3 - deleting, 4 - deleted, 5 - lost
         $connection = connectToDb();
         $connection->exec("CREATE TABLE `files` (
             `fileName` TEXT NOT NULL,
@@ -17,7 +16,6 @@
 
         successMessage("Database created successfully.");
     }
-
 
     function canDelete() {
         if (!file_exists(DB_FILE)) {
@@ -37,7 +35,6 @@
         return True;
     }
 
-
     function connectToDb() {
         $conn = new PDO("sqlite:" . DB_FILE);
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -50,7 +47,6 @@
         return $conn;
     }
 
-
     /* FILES */
     function getFileData($connection, $fileName) {
         $stmt = $connection->prepare("SELECT * FROM files WHERE fileName = :fileName");
@@ -59,14 +55,12 @@
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-
     function addFile($connection, $fileName, $toDelete) {
         $stmt = $connection->prepare("INSERT INTO files (fileName, toDelete) VALUES (:fileName, :toDelete)");
         $stmt->bindParam(':fileName', $fileName);
         $stmt->bindParam(':toDelete', $toDelete);
         $stmt->execute();
     }
-
 
     function getFilesInState($connection, $state) {
         $stmt = $connection->prepare("SELECT * FROM files WHERE state = :state");
@@ -75,9 +69,7 @@
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-
     function editDeletionDate($connection, $days) {
-        //get all files in state 0 / 1 / 2
         $stmt = $connection->prepare("SELECT * FROM files WHERE state < 3");
         $stmt->execute();
         $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -91,14 +83,12 @@
         }
     }
 
-
     function changeFileState($connection, $fileName, $state) {
         $stmt = $connection->prepare("UPDATE files SET state = :state WHERE fileName = :fileName");
         $stmt->bindParam(':fileName', $fileName);
         $stmt->bindParam(':state', $state);
         $stmt->execute();
     }
-
 
     function getFilesToDelete($connection) {
         $time = date("Y-m-d H:i:s");
@@ -108,9 +98,7 @@
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-
     function extendBackup($days) {
-        //if days is not number, is not set or is less than 0, or is decimal
         if (!is_numeric($days) || $days != round($days)) {
             errorMessage("ERROR: Days is not set, is not a number or is decimal.");
             return;
@@ -124,7 +112,6 @@
             successMessage("Backup decreased for " . abs($days) . " " . ngettext("day", "days", abs($days)) . ".");
         }
     }
-
 
     function fixErrors($fixing) {
         if ($fixing != "upload" && $fixing != "delete" && $fixing != "error") {
@@ -140,7 +127,6 @@
             $state = 5;
         }
 
-        //get all files in state 1 / 3 / 5
         $connection = connectToDb();
         $stmt = $connection->prepare("SELECT * FROM files WHERE state = :state");
         $stmt->bindParam(':state', $state);
@@ -166,5 +152,4 @@
         successMessage("All files in state '". getState($state) ."' are now in state '" . getState($newState) . "'. (" . count($files) . " " . $text . ")");
         echo "Please run 'php syncer.php autorun' to continue.\n";
     }
-
 ?>

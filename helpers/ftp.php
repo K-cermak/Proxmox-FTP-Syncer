@@ -1,9 +1,7 @@
 <?php
     function getFtpConnection($host, $port, $user, $pass, $path) {
-        //disable error reporting
         error_reporting(0);
 
-        //check if port is number
         if (!is_numeric($port)) {
             errorMessage("ERROR: Port must be a number.");
             return false;
@@ -14,11 +12,13 @@
             errorMessage("ERROR: Unable to connect to the FTP server.");
             return false;
         }
+
         $login = ftp_login($ftp, $user, $pass);
         if ($login === false) {
             errorMessage("ERROR: Unable to login to the FTP server.");
             return false;
         }
+
         $chdir = ftp_chdir($ftp, $path);
         if ($chdir === false) {
             errorMessage("ERROR: Unable to change directory on the FTP server.");
@@ -26,18 +26,16 @@
         }
         return $ftp;
 
-        //enable error reporting
         error_reporting(1);
     }
 
-
     function getNewFiles($type) {
-        global $emailStats;
+        global $syncStats;
 
         $ftp = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
         if ($ftp === false) {
-            $emailStats["isok"] = false;
-            $emailStats["errors"][] = "Unable to connect to the ORIGIN server.";
+            $syncStats["isok"] = false;
+            $syncStats["errors"][] = "Unable to connect to the ORIGIN server.";
             return;
         }
 
@@ -65,19 +63,19 @@
             echo "    " . $newFiles[$i];
             $listedAnythingNew = true;
 
-            //ading to DB
+            //adding to DB
             if ($type == "light" || $type == "classic") {
                 if (KEEP_FILES_FOR == 0) {
                     $toDeleteOn = "9999-12-31 23:59:59";
                 } else {
                     $toDeleteOn = date("Y-m-d H:i:s", strtotime("+" . KEEP_FILES_FOR . " days"));
                 }
-                $emailStats["detected"] += 1;
+                $syncStats["detected"] += 1;
                 addFile($dbConnection, $newFiles[$i], $toDeleteOn);
                 successMessage(" - added to the database.", false);
             }
+
             if ($type == "list") {
-                //print state and deletion date
                 $fileData = getFileData($dbConnection, $newFiles[$i]);
                 echo " | State: " . getState($fileData["state"]) . ", Deletion date: " . $fileData["toDelete"];
             }
@@ -86,11 +84,10 @@
         }
         ftp_close($ftp);
 
-        //when nothing found
         if (!$listedAnythingNew) {
             errorMessage("    Warning: No new files found.");
-            $emailStats["isok"] = false;
-            $emailStats["errors"][] = "No new files found.";
+            $syncStats["isok"] = false;
+            $syncStats["errors"][] = "No new files found.";
             if ($type == "classic" && EXTEND_BACKUP_ON_ERROR != 0) {
                 editDeletionDate($dbConnection, EXTEND_BACKUP_ON_ERROR);
                 successMessage("    Deletion date of all files has been updated.");
@@ -98,14 +95,13 @@
         }
     }
 
-
     function getLostFiles($type) {
-        global $emailStats;
+        global $syncStats;
 
         $ftp = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
         if ($ftp === false) {
-            $emailStats["isok"] = false;
-            $emailStats["errors"][] = "Unable to connect to the ORIGIN server.";
+            $syncStats["isok"] = false;
+            $syncStats["errors"][] = "Unable to connect to the ORIGIN server.";
             return;
         }
 
@@ -124,10 +120,9 @@
             echo "    " . $allFiles[$i]["fileName"];
             $listedAnything = true;
 
-            //editing DB
             if ($type == "light" || $type == "classic") {
-                $emailStats["lost"] += 1;
-                $emailStats["isok"] = false;
+                $syncStats["lost"] += 1;
+                $syncStats["isok"] = false;
                 changeFileState($dbConnection, $allFiles[$i]["fileName"], 5);
                 successMessage(" - edited in the database.", false);
             }
@@ -136,17 +131,14 @@
         }
         ftp_close($ftp);
 
-        //when nothing found
         if (!$listedAnything) {
             successMessage("    No lost files.");
         }
     }
 
-
     function sync() {
-        global $emailStats;
+        global $syncStats;
 
-        //get all files in DB with state 0
         $dbConnection = connectToDb();
         $files = getFilesInState($dbConnection, 0);
 
@@ -159,8 +151,8 @@
         $destination = getFtpConnection(DEST_HOST, DEST_PORT, DEST_USER, DEST_PASS, DEST_PATH);
 
         if ($origin === false || $destination === false) {
-            $emailStats["isok"] = false;
-            $emailStats["errors"][] = "Unable to connect to the ORIGIN or DESTINATION server.";
+            $syncStats["isok"] = false;
+            $syncStats["errors"][] = "Unable to connect to the ORIGIN or DESTINATION server.";
             return;
         }
 
@@ -175,7 +167,7 @@
             $fileName = $files[$i]["fileName"];
             changeFileState($dbConnection, $fileName, 1);
 
-            // download file from origin to temp
+            //download file from origin to temp
             $temp = tempnam(sys_get_temp_dir(), "syncer");
             ftp_get($origin, $temp, $fileName, FTP_BINARY);
             if (!file_exists($temp)) {
@@ -186,13 +178,13 @@
                 continue;
             }
 
-            // upload file from temp to destination
+            //upload file from temp to destination
             ftp_put($destination, $fileName, $temp, FTP_BINARY);
 
-            // delete file from temp
+            //delete file from temp
             unlink($temp);
 
-            $emailStats["uploaded"] += 1;
+            $syncStats["uploaded"] += 1;
             changeFileState($dbConnection, $fileName, 2);
         }
 
@@ -203,15 +195,14 @@
         if ($errors == 0) {
             successMessage("Syncing successful.");
         } else {
-            $emailStats["isok"] = false;
-            $emailStats["errors"][] = "Syncing successful, but " . $errors . " files failed.";
+            $syncStats["isok"] = false;
+            $syncStats["errors"][] = "Syncing successful, but " . $errors . " files failed.";
             errorMessage("Successfully synced " . (count($files) - $errors) . "/" . count($files) . " " . $text . ", " .  $errors . " failed.");
         }
     }
 
-
     function deleteOld() {
-        global $emailStats;
+        global $syncStats;
 
         $dbConnection = connectToDb();
         $files = getFilesToDelete($dbConnection, 2);
@@ -238,7 +229,7 @@
             $fileName = $files[$i]["fileName"];
             changeFileState($dbConnection, $fileName, 3);
 
-            // delete file from destination
+            //delete file from destination
             if (!ftp_delete($ftp, $fileName)) {
                 $errors += 1;
                 changeFileState($dbConnection, $fileName, 5);
@@ -246,7 +237,7 @@
                 continue;
             }
 
-            $emailStats["deleted"] += 1;
+            $syncStats["deleted"] += 1;
             changeFileState($dbConnection, $fileName, 4);
         }
 
@@ -257,11 +248,9 @@
         if ($errors == 0) {
             successMessage("Deletion successful.");
         } else {
-            $emailStats["isok"] = false;
-            $emailStats["errors"][] = "Deletion successful, but " . $errors . " files failed.";
+            $syncStats["isok"] = false;
+            $syncStats["errors"][] = "Deletion successful, but " . $errors . " files failed.";
             errorMessage("Successfully deleted " . (count($files) - $errors) . "/" . count($files) . " " . $text . ", " .  $errors . " failed.");
         }
-
-
     }
 ?>

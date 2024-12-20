@@ -1,60 +1,63 @@
 <?php
     function getHelp() {
-        echo "Usage: php syncer.php [OPTION]\n";
+        echo "Usage: php syncer.php [COMMAND] [OPTION]\n";
     
         //autorun
-        boldMessage("       autorun", false);
-        echo " - discover new files, synchronize and delete old files (optimal for cron)\n";
+        boldMessage("       autorun", true);
+        echo "        - Discover new files, synchronize and delete old files (optimal for cron).\n\n";
 
         //check connection
-        boldMessage("       check-connection", false);
-        echo " - check the connection to the FTP servers\n";
+        boldMessage("       check-connection", true);
+        echo "        - Check the connection to the FTP servers.\n\n";
 
         //check email
-        boldMessage("       check-email", false);
-        echo " - send test email\n";
+        boldMessage("       check-email", true);
+        echo "        - Send test email.\n\n";
+
+        //check discord
+        boldMessage("       check-discord [ping]", true);
+        echo "        - Send a test Discord message. Add 'ping' to include a ping to specified user in the message.\n\n";
 
         //check settings
-        boldMessage("       check-settings", false);
-        echo " - check the settings\n";
+        boldMessage("       check-settings", true);
+        echo "        - Check the settings.\n\n";
 
         //create DB
-        boldMessage("       create-db", false);
-        echo " - create a new database";
-        errorMessage(" (WARNING: This will delete all data in the current database!)");
+        boldMessage("       create-db", true);
+        echo "        - Create a new database. ";
+        errorMessage("(WARNING: This will delete all data in the current database!)\n");
 
         //delete
-        boldMessage("       delete", false);
-        echo " - delete old files\n";
+        boldMessage("       delete", true);
+        echo "        - Delete old files.\n\n";
 
         //discovery
-        boldMessage("       discovery", false);
-        echo " [list|safe|light|classic] - discover new files\n";
-        echo "            list - just list all files (even old), no changes in DB\n";
-        echo "            safe - just list new files, no changes in DB [default]\n";
-        echo "            light - will add new files in DB, but wont edit files deletion date when not found anything new\n";
-        echo "            classic - will add new files in DB, will edit files deletion date when not found anything new\n";
+        boldMessage("       discovery [list|safe|light|classic]", true);
+        echo "        - Discover new files.\n";
+        echo "            list - just list all files (even old), no changes in DB.\n";
+        echo "            safe - just list new files, no changes in DB (default).\n";
+        echo "            light - will add new files in DB, but wont edit files deletion date when not found anything new.\n";
+        echo "            classic - will add new files in DB, will edit files deletion date when not found anything new.\n\n";
 
         //extend-backup
-        boldMessage("       extend-backup", false);
-        echo " [DAYS] - extend the backup for DAYS (negative will decrease the deletion date)\n";
+        boldMessage("       extend-backup [DAYS]", true);
+        echo "        - Extend the backup for DAYS (negative will decrease the deletion date).\n\n";
 
         //fix
-        boldMessage("       fix", false);
-        echo " [upload|delete|error] - fix errors in the database\n";
-        echo "            upload - change state of all files in state '" . getState(1) . "' to '" . getState(0) . "'\n";
-        echo "            delete - change state of all files in state '" . getState(3) . "' to '" . getState(2) . "'\n";
-        echo "            error - change state of all files in state '" . getState(5) . "' to '" . getState(0) . "'\n";
+        boldMessage("       fix [upload|delete|error]", true);
+        echo "        - Fix errors in the database.\n";
+        echo "            upload - change state of all files in state '" . getState(1) . "' to '" . getState(0) . "'.\n";
+        echo "            delete - change state of all files in state '" . getState(3) . "' to '" . getState(2) . "'.\n";
+        echo "            error - change state of all files in state '" . getState(5) . "' to '" . getState(0) . "'.\n\n";
         
         //help
-        boldMessage("       help", false);
-        echo " - display this help\n";
+        boldMessage("       help", true);
+        echo "        - Display this help page.\n\n";
 
         //sync
-        boldMessage("       sync", false);
-        echo " - synchronize files to DESTINATION server\n";
+        boldMessage("       sync", true);
+        echo "        - Synchronize files to DESTINATION server.\n\n";
     }
-
 
     function checkInstalledSqlite() {
         if (!extension_loaded('pdo_sqlite')) {
@@ -63,14 +66,12 @@
         }
     }
 
-
     function checkInstalledFtp() {
         if (!extension_loaded('ftp')) {
             errorMessage("ERROR: FTP extension is not installed. Please install it and try again.");
             exit(1);
         }
     }
-
 
     function checkConnection() {
         echo "Checking connection to the ORIGIN server... ";
@@ -92,9 +93,7 @@
         }
     }
 
-
     function checkSettings() {
-        //if KEEP_FILES_FOR is not number, is not set or is less than 0, or is decimal
         if (!is_numeric(KEEP_FILES_FOR) || KEEP_FILES_FOR < 0 || KEEP_FILES_FOR != round(KEEP_FILES_FOR)) {
             errorMessage("ERROR: KEEP_FILES_FOR is not set, is not a number, is less than 0 or is decimal.");
         } else if (KEEP_FILES_FOR == 0) {
@@ -105,7 +104,6 @@
             echo " Files will be deleted after this period.\n";
         }
 
-        //if EXTEND_BACKUP_ON_ERROR is not number, is not set or is less than 0, or is decimal
         if (!is_numeric(EXTEND_BACKUP_ON_ERROR) || EXTEND_BACKUP_ON_ERROR < 0 || EXTEND_BACKUP_ON_ERROR != round(EXTEND_BACKUP_ON_ERROR)) {
             errorMessage("ERROR: PAUSE_SYNC_ON_ERROR is not set, is not a number, is less than 0 or is decimal.");
         } else if (EXTEND_BACKUP_ON_ERROR == 0) {
@@ -115,22 +113,54 @@
             successMessage("PAUSE_SYNC_ON_ERROR is set to $days.", false);
             echo " Deleting files will be delayed for $days if synchronization fails.\n";
         }
+
+        if (SEND_EMAIL == "no") {
+            successMessage("SEND_EMAIL is set to 'no', emails will not be sent.");
+        } else if (SEND_EMAIL == "on_error") {
+            successMessage("SEND_EMAIL is set to 'on_error', emails will be sent only on errors.");
+        } else if (SEND_EMAIL == "always") {
+            successMessage("SEND_EMAIL is set to 'always', emails will be sent even if there are no errors.");
+        } else {
+            errorMessage("ERROR: SEND_EMAIL is not set to 'no', 'on_error' or 'always', fix it in your settings.php file.");
+        }
+
+        if (SEND_DISCORD_HOOKS == "no") {
+            successMessage("SEND_DISCORD_HOOKS is set to 'no', Discord messages will not be sent.");
+        } else if (SEND_DISCORD_HOOKS == "on_error") {
+            successMessage("SEND_DISCORD_HOOKS is set to 'on_error', Discord messages will be sent only on errors.");
+        } else if (SEND_DISCORD_HOOKS == "always") {
+            successMessage("SEND_DISCORD_HOOKS is set to 'always', Discord messages will be sent even if there are no errors.");
+        } else {
+            errorMessage("ERROR: SEND_DISCORD_HOOKS is not set to 'no', 'on_error' or 'always', fix it in your settings.php file.");
+        }
+
+        if (PING_USER == "no") {
+            successMessage("PING_USER is set to 'no', user will not be pinged in Discord messages.");
+        } else if (PING_USER == "on_error") {
+            successMessage("PING_USER is set to 'on_error', user will be pinged only on errors.");
+        } else if (PING_USER == "always") {
+            successMessage("PING_USER is set to 'always', user will be pinged even if there are no errors.");
+        } else {
+            errorMessage("ERROR: PING_USER is not set to 'no', 'on_error' or 'always', fix it in your settings.php file.");
+        }
     }
-    
 
     function getState($state) {
-        if ($state == 0) {
-            return "New";
-        } else if ($state == 1) {
-            return "Syncing";
-        } else if ($state == 2) {
-            return "Synced";
-        } else if ($state == 3) {
-            return "Deleting from DESTINATION server";
-        } else if ($state == 4) {
-            return "Deleted from DESTINATION server";
-        } else if ($state == 5) {
-            return "Error / Lost";
+        switch ($state) {
+            case 0:
+                return "New";
+            case 1:
+                return "Syncing";
+            case 2:
+                return "Synced";
+            case 3:
+                return "Deleting from DESTINATION server";
+            case 4:
+                return "Deleted from DESTINATION server";
+            case 5:
+                return "Error / Lost";
         }
+
+        return "Unknown";
     }
 ?>

@@ -1,13 +1,23 @@
 <?php
     /*
-        Proxmox Syncer v1.1 by Karel Cermak | karlosoft.com
+    **     ___                                                  ___
+    **    (  _`\                                               (  _`\
+    **    | |_) ) _ __   _           ___ ___     _            | (_(_) _   _   ___     ___    __   _ __
+    **    | ,__/'( '__)/'_`\ (`\/')/' _ ` _ `\ /'_`\ (`\/')   `\__ \ ( ) ( )/' _ `\ /'___) /'__`\( '__)
+    **    | |    | |  ( (_) ) >  < | ( ) ( ) |( (_) ) >  <    ( )_) || (_) || ( ) |( (___ (  ___/| |
+    **    (_)    (_)  `\___/'(_/\_)(_) (_) (_)`\___/'(_/\_)   `\____)`\__, |(_) (_)`\____)`\____)(_)
+    **                                                              ( )_| |
+    **                                                             `\___/'              Version 1.2
+    **
+    **    Proxmox Syncer v1.2
+    **    Developed by: Karel Cermak | karlosoft.com
+    **    Licensed under the MIT License.
     */
 
-    //disable time limit
-    set_time_limit(0);
+    set_time_limit(0); //disable time limit, change if you want
 
-    //for email
-    $emailStats = array(
+    $syncStats = array(
+        "started" => date("Y-m-d H:i:s"),
         "detected" => 0,
         "lost" => 0,
         "uploaded" => 0,
@@ -26,55 +36,89 @@
     require 'email/PHPMailer.php';
     require 'email/SMTP.php';
     require 'helpers/email.php';
+    require "helpers/discord.php";
 
     copyright();
     checkInstalledSqlite();
     checkInstalledFtp();
 
     $arg = $argv[1] ?? '?';
-    if ($arg == "?" || $arg == "help") {
-        if ($arg == "?") {
-            errorMessage("ERROR: Not command line arguments found.");
-        }
+    if ($arg == "?") {
+        errorMessage("ERROR: Not command line arguments found.");
         getHelp();
-    
-    } else if ($arg == "create-db") {
-        build();
-    } else if ($arg == "check-connection") {
-        checkConnection();
-    } else if ($arg == "check-settings") {
-        checkSettings();
-    } else if ($arg == "check-email") {
-        testEmail();
-    } else if ($arg == "discovery") {
-        $type = $argv[2] ?? "safe";
-        getNewFiles($type);
-        getLostFiles($type);
-    } else if ($arg == "sync") {
-        sync();
-    } else if ($arg == "delete") {
-        deleteOld();
-    } else if ($arg == "autorun") {
-        $start = microtime(true);
-        getNewFiles("classic");
-        getLostFiles("classic");
-        sync();
-        deleteOld();
-
-        $end = microtime(true);
-        $emailStats["time"] = $end - $start;
-        sendReport();        
-
-    } else if ($arg == "extend-backup") {
-        $days = $argv[2] ?? 0;
-        extendBackup($days);
-    } else if ($arg == "fix") {
-        $fixing = $argv[2] ?? "-";
-        fixErrors($fixing);
-    } else {
-        errorMessage("ERROR: Invalid command line argument.");
-        getHelp();
+        return;
     }
 
+    switch ($arg) {
+        case "create-db":
+            buildDatabase();
+            break;
 
+            case "check-connection":
+            checkConnection();
+            break;
+
+            case "check-settings":
+            checkSettings();
+            break;
+
+            case "check-email":
+            testEmail();
+            break;
+
+        case "check-discord":
+            $ping = $argv[2] ?? false;
+            if ($ping == "ping") {
+                $ping = true;
+            }
+
+            testWebhook($ping);
+            break;
+
+        case "discovery":
+            $type = $argv[2] ?? "safe";
+            getNewFiles($type);
+            getLostFiles($type);
+            break;
+
+        case "sync":
+            sync();
+            break;
+
+        case "delete":
+            deleteOld();
+            break;
+
+        case "autorun":
+            $start = microtime(true);
+            getNewFiles("classic");
+            getLostFiles("classic");
+            sync();
+            deleteOld();
+
+            $end = microtime(true);
+            $syncStats["time"] = $end - $start;
+            sendReport();
+            sendWebhook();
+            break;
+
+        case "extend-backup":
+            $days = $argv[2] ?? 0;
+            extendBackup($days);
+            break;
+
+        case "fix":
+            $fixing = $argv[2] ?? "-";
+            fixErrors($fixing);
+            break;
+
+        case "help":
+            getHelp();
+            break;
+
+        default:
+            errorMessage("ERROR: Invalid command line argument.");
+            getHelp();
+            break;
+    }
 ?>

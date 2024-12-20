@@ -23,6 +23,13 @@
 
 <br>
 
+## Discord Notifications (Webhooks)
+- Go to the file with your keys (the same as the set variable `CREDENTIALS_FILE` above).
+- Copy the Discord webhook URL and paste it into the `DISCORD_WEBHOOK` variable.
+- If you set that you want to be pinged, enter your Discord ID in the `DISCORD_PING_ID` variable.
+
+<br>
+
 ## Database Initialization
 - Run the command `php syncer.php create-db`.
 

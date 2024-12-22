@@ -56,7 +56,7 @@
         ];
 
         if ($syncStats["isok"]) {
-            $embed['title'] = '✅ Proxmox Syncer ended Succesfully ! ✅';
+            $embed['title'] = '✅ Proxmox Syncer ended succesfully ✅';
             $embed['color'] = 0x00FF00;
         } else {
             $embed['title'] = '❌ Proxmox Syncer ended with errors ❌';

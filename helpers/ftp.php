@@ -7,7 +7,7 @@
             return false;
         }
 
-        $ftp = ftp_connect($host, $port);
+        $ftp = ftp_connect($host, $port, 6000);
         if ($ftp === false) {
             errorMessage("ERROR: Unable to connect to the FTP server.");
             return false;
@@ -18,6 +18,8 @@
             errorMessage("ERROR: Unable to login to the FTP server.");
             return false;
         }
+
+        ftp_pasv($ftp, true);
 
         $chdir = ftp_chdir($ftp, $path);
         if ($chdir === false) {
@@ -146,15 +148,6 @@
             errorMessage("\nNo files to sync.");
             return;
         }
-        
-        $origin = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
-        $destination = getFtpConnection(DEST_HOST, DEST_PORT, DEST_USER, DEST_PASS, DEST_PATH);
-
-        if ($origin === false || $destination === false) {
-            $syncStats["isok"] = false;
-            $syncStats["errors"][] = "Unable to connect to the ORIGIN or DESTINATION server.";
-            return;
-        }
 
         $text = ngettext("file", "files", count($files));
         $errors = 0;
@@ -167,9 +160,17 @@
             $fileName = $files[$i]["fileName"];
             changeFileState($dbConnection, $fileName, 1);
 
-            //download file from origin to temp
+            $origin = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
+            if ($origin === false) {
+                $syncStats["isok"] = false;
+                $syncStats["errors"][] = "Unable to connect to the ORIGIN or DESTINATION server.";
+                return;
+            }
+
             $temp = tempnam(sys_get_temp_dir(), "syncer");
             ftp_get($origin, $temp, $fileName, FTP_BINARY);
+            ftp_close($origin);
+
             if (!file_exists($temp)) {
                 $errors += 1;
                 changeFileState($dbConnection, $fileName, 5);
@@ -178,18 +179,30 @@
                 continue;
             }
 
-            //upload file from temp to destination
-            ftp_put($destination, $fileName, $temp, FTP_BINARY);
+            $destination = getFtpConnection(DEST_HOST, DEST_PORT, DEST_USER, DEST_PASS, DEST_PATH);    
+            if ($destination === false) {
+                $syncStats["isok"] = false;
+                $syncStats["errors"][] = "Unable to connect to the ORIGIN or DESTINATION server.";
+                unlink($temp);
+                return;
+            }
 
-            //delete file from temp
+            if (ftp_put($destination, $fileName, $temp, FTP_BINARY)) {
+                $syncStats["uploaded"] += 1;
+                changeFileState($dbConnection, $fileName, 2);
+
+            } else {
+                $errors += 1;
+                changeFileState($dbConnection, $fileName, 5);
+                echo "\n";
+                errorMessage("ERROR: Unable to upload the file to the DESTINATION server (File: $fileName).");
+            }
+
+            ftp_close($destination);
             unlink($temp);
-
-            $syncStats["uploaded"] += 1;
-            changeFileState($dbConnection, $fileName, 2);
         }
 
         progressBar(count($files), count($files));
-        ftp_close($origin);
         echo "\nFinished at: " . date("Y-m-d H:i:s") . "\n";
         
         if ($errors == 0) {

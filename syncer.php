@@ -54,15 +54,15 @@
             buildDatabase();
             break;
 
-            case "check-connection":
+        case "check-connection":
             checkConnection();
             break;
 
-            case "check-settings":
+        case "check-settings":
             checkSettings();
             break;
 
-            case "check-email":
+        case "check-email":
             testEmail();
             break;
 

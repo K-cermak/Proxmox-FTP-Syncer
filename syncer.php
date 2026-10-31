@@ -91,10 +91,16 @@
 
         case "autorun":
             $start = microtime(true);
-            getNewFiles("classic");
-            getLostFiles("classic");
-            sync();
-            deleteOld();
+            try {
+                getNewFiles("classic");
+                getLostFiles("classic");
+                sync();
+                deleteOld();
+            } catch (Throwable $e) {
+                errorMessage("\nERROR: " . $e->getMessage());
+                $syncStats["isok"] = false;
+                $syncStats["errors"][] = "Unexpected error: " . $e->getMessage();
+            }
 
             $end = microtime(true);
             $syncStats["time"] = $end - $start;

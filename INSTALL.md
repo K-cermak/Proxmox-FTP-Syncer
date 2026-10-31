@@ -54,6 +54,7 @@ user_sub_token=$USER
 - Update the package list: `sudo apt-get update`.
 - Install PHP: `sudo apt-get install php-cli`.
 - Install the library for sqlite: `sudo apt-get install php-sqlite3`.
+- Install the library for curl (required for Discord notifications): `sudo apt-get install php-curl`.
 
 - Create a folder and place the files of this repository in it.
 - You can learn how to setup and use this tool in the file [`USAGE.md`](USAGE.md).

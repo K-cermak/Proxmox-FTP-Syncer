@@ -80,6 +80,11 @@
     }
 
     function sendRequest($data) {
+        if (!extension_loaded('curl')) {
+            errorMessage("ERROR: cURL extension is not installed. Discord Webhook cannot be sent.");
+            return;
+        }
+
         $jsonData = json_encode($data);
         $ch = curl_init(DISCORD_WEBHOOK);
 
@@ -87,11 +92,11 @@
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 
         curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-        curl_close($ch);
 
         if ($httpCode === 204) {
             successMessage("Discord Webhook sended successfully.");

@@ -1,19 +1,17 @@
 <?php
     function getFtpConnection($host, $port, $user, $pass, $path) {
-        error_reporting(0);
-
         if (!is_numeric($port)) {
             errorMessage("ERROR: Port must be a number.");
             return false;
         }
 
-        $ftp = ftp_connect($host, $port, 6000);
+        $ftp = @ftp_connect($host, $port, 6000);
         if ($ftp === false) {
             errorMessage("ERROR: Unable to connect to the FTP server.");
             return false;
         }
 
-        $login = ftp_login($ftp, $user, $pass);
+        $login = @ftp_login($ftp, $user, $pass);
         if ($login === false) {
             errorMessage("ERROR: Unable to login to the FTP server.");
             return false;
@@ -21,14 +19,20 @@
 
         ftp_pasv($ftp, true);
 
-        $chdir = ftp_chdir($ftp, $path);
+        $chdir = @ftp_chdir($ftp, $path);
         if ($chdir === false) {
             errorMessage("ERROR: Unable to change directory on the FTP server.");
             return false;
         }
         return $ftp;
+    }
 
-        error_reporting(1);
+    // Unreachable ORIGIN or no new backups may mean Proxmox stopped backing up, so old copies must not expire meanwhile.
+    function extendBackupOnError($type) {
+        if ($type == "classic" && EXTEND_BACKUP_ON_ERROR != 0) {
+            editDeletionDate(connectToDb(), EXTEND_BACKUP_ON_ERROR);
+            successMessage("    Deletion date of all files has been updated.");
+        }
     }
 
     function getNewFiles($type) {
@@ -38,6 +42,7 @@
         if ($ftp === false) {
             $syncStats["isok"] = false;
             $syncStats["errors"][] = "Unable to connect to the ORIGIN server.";
+            extendBackupOnError($type);
             return;
         }
 
@@ -48,7 +53,16 @@
         }
 
         $newFiles = ftp_nlist($ftp, ".");
-        $dbConnection = connectToDb(); 
+        if ($newFiles === false) {
+            ftp_close($ftp);
+            errorMessage("ERROR: Unable to list files on the ORIGIN server.");
+            $syncStats["isok"] = false;
+            $syncStats["errors"][] = "Unable to list files on the ORIGIN server.";
+            extendBackupOnError($type);
+            return;
+        }
+
+        $dbConnection = connectToDb();
         $listedAnythingNew = false;
 
         for ($i = 0; $i < count($newFiles); $i++) {
@@ -68,7 +82,7 @@
             //adding to DB
             if ($type == "light" || $type == "classic") {
                 if (KEEP_FILES_FOR == 0) {
-                    $toDeleteOn = "9999-12-31 23:59:59";
+                    $toDeleteOn = KEEP_FOREVER_DATE;
                 } else {
                     $toDeleteOn = date("Y-m-d H:i:s", strtotime("+" . KEEP_FILES_FOR . " days"));
                 }
@@ -79,7 +93,11 @@
 
             if ($type == "list") {
                 $fileData = getFileData($dbConnection, $newFiles[$i]);
-                echo " | State: " . getState($fileData["state"]) . ", Deletion date: " . $fileData["toDelete"];
+                if ($fileData === false) {
+                    echo " | Not in the database";
+                } else {
+                    echo " | State: " . getState($fileData["state"]) . ", Deletion date: " . $fileData["toDelete"];
+                }
             }
 
             echo "\n";
@@ -90,10 +108,7 @@
             errorMessage("    Warning: No new files found.");
             $syncStats["isok"] = false;
             $syncStats["errors"][] = "No new files found.";
-            if ($type == "classic" && EXTEND_BACKUP_ON_ERROR != 0) {
-                editDeletionDate($dbConnection, EXTEND_BACKUP_ON_ERROR);
-                successMessage("    Deletion date of all files has been updated.");
-            }
+            extendBackupOnError($type);
         }
     }
 
@@ -167,13 +182,17 @@
                 return;
             }
 
+            $originSize = ftp_size($origin, $fileName);
             $temp = tempnam(sys_get_temp_dir(), "syncer");
-            ftp_get($origin, $temp, $fileName, FTP_BINARY);
+            $downloaded = $temp !== false && ftp_get($origin, $temp, $fileName, FTP_BINARY);
             ftp_close($origin);
 
-            if (!file_exists($temp)) {
+            if (!$downloaded || filesize($temp) !== $originSize) {
                 $errors += 1;
                 changeFileState($dbConnection, $fileName, 5);
+                if ($temp !== false) {
+                    unlink($temp);
+                }
                 echo "\n";
                 errorMessage("ERROR: Unable to download the file from the ORIGIN server (File: $fileName).");
                 continue;
@@ -187,7 +206,11 @@
                 return;
             }
 
-            if (ftp_put($destination, $fileName, $temp, FTP_BINARY)) {
+            $uploaded = ftp_put($destination, $fileName, $temp, FTP_BINARY);
+            // -1 means the DESTINATION server doesn't support SIZE, so the upload can't be verified further.
+            $destinationSize = $uploaded ? ftp_size($destination, $fileName) : -1;
+
+            if ($uploaded && ($destinationSize == -1 || $destinationSize === $originSize)) {
                 $syncStats["uploaded"] += 1;
                 changeFileState($dbConnection, $fileName, 2);
 

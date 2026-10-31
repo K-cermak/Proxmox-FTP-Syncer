@@ -1,4 +1,6 @@
 <?php
+    define("KEEP_FOREVER_DATE", "9999-12-31 23:59:59");
+
     /* DATABASE */
     function buildDatabase() {
         if (!canDelete()) {
@@ -70,7 +72,9 @@
     }
 
     function editDeletionDate($connection, $days) {
-        $stmt = $connection->prepare("SELECT * FROM files WHERE state < 3");
+        // Shifting KEEP_FOREVER_DATE past year 9999 would produce "10000-...", which sorts before today as text and gets deleted.
+        $stmt = $connection->prepare("SELECT * FROM files WHERE state < 3 AND toDelete != :keepForever");
+        $stmt->bindValue(':keepForever', KEEP_FOREVER_DATE);
         $stmt->execute();
         $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

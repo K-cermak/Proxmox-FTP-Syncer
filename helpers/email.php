@@ -5,11 +5,11 @@
 
     function testEmail() {
         $recipients = explode(",", SEND_TO);
-        $sended = sendEmail("Test Email", "This is a test email from Proxmox Syncer by Karlosoft.", $recipients);
-        if ($sended) {
-            successMessage("Test Email sended successfully.");
+        $sent = sendEmail("Test email", "This is a test email from Proxmox FTP Syncer by Karlosoft.", $recipients);
+        if ($sent) {
+            successMessage("Test email sent successfully.");
         } else {
-            errorMessage("Test Email sending error.");
+            errorMessage("Failed to send the test email.");
         }
     }
 
@@ -22,19 +22,19 @@
         $syncStats["time"] = gmdate("H:i:s", $syncStats["time"]);
 
         if ($syncStats["isok"]) {
-            $subject = "✅ Proxmox Syncer Report";
-            $data = "Proxmox Syncer ended <b style='color:green;'>successfully</b>.<br><br>";
+            $subject = "✅ Proxmox FTP Syncer report";
+            $data = "Proxmox FTP Syncer finished <b style='color:green;'>successfully</b>.<br><br>";
         } else {
-            $subject = "❌ WARNING: Proxmox Syncer ended with errors";
-            $data = "Proxmox Syncer ended with <b style='color:red;'>errors</b>.<br><br>";
+            $subject = "❌ WARNING: Proxmox FTP Syncer finished with errors";
+            $data = "Proxmox FTP Syncer finished with <b style='color:red;'>errors</b>.<br><br>";
         }
 
         $data .= "Started: " . $syncStats["started"] . "<br>";
         $data .= "Duration: " . $syncStats["time"] . "<br>";
-        $data .= "Detected Files: " . $syncStats["detected"] . "<br>";
-        $data .= "Lost Files: " . $syncStats["lost"] . "<br>";
-        $data .= "Uploaded Files: " . $syncStats["uploaded"] . "<br>";
-        $data .= "Deleted Files: " . $syncStats["deleted"] . "<br>";
+        $data .= "Detected files: " . $syncStats["detected"] . "<br>";
+        $data .= "Lost files: " . $syncStats["lost"] . "<br>";
+        $data .= "Uploaded files: " . $syncStats["uploaded"] . "<br>";
+        $data .= "Deleted files: " . $syncStats["deleted"] . "<br>";
 
         if (!$syncStats["isok"]) {
             $data .= "<b>Errors:</b> <br>";
@@ -43,14 +43,14 @@
             }
         }
 
-        $data .= "<br><br><br>This is an automatic email from Proxmox Syncer by Karlosoft.";
+        $data .= "<br><br><br>This is an automated email from Proxmox FTP Syncer by Karlosoft.";
 
         $recipients = explode(",", SEND_TO);
-        $sended = sendEmail($subject, $data, $recipients);
-        if ($sended) {
-            successMessage("Report Email sended successfully.");
+        $sent = sendEmail($subject, $data, $recipients);
+        if ($sent) {
+            successMessage("Report email sent successfully.");
         } else {
-            errorMessage("Report Email sending error.");
+            errorMessage("Failed to send the report email.");
         }
     }
 

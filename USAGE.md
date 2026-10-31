@@ -1,52 +1,54 @@
 ## Basic settings
-- Go to the `settings.php file` and set the following variables:
+- Open the `settings.php` file and set the following constants:
 
-    - `CREDENTIALS_FILE` - Path to the file with login credentials.
-    - `DB_FILE` - Path to the database file. Do not create a database, just enter the absolute path to the file with the .sqlite extension.
-    - `KEEP_FILES_FOR` - Enter the number of days for which backups will be kept on the FTP server. When set to 0, backups will not be deleted.
-    - `EXTEND_BACKUP_ON_ERROR` - Enter the number of days by which the retention of backups on the FTP server will be extended if a new backup created by Proxmox is not found. When set to 0, backups will not be extended.
-    - `SEND_EMAIL` - The value `always` will send an informational email after each backup. The value `on_error` will send an email only in case of an error. The value `no` will not send an email at all.
-
-
-<br>
-
-## FTP Settings
-- Go to the file with your keys (the same as the set variable `CREDENTIALS_FILE` above).
-- Enter the login details for the FTP servers. The ORIGIN server is the server from which backups are downloaded (Proxmox), the DESTINATION server is the server (for example, NAS, AWS S3) where backups are stored.
+    - `CREDENTIALS_FILE` - Path to the file with your credentials.
+    - `DB_FILE` - Absolute path to the database file (with the `.sqlite` extension). Do not create the file yourself; the `create-db` command will create it.
+    - `KEEP_FILES_FOR` - Number of days for which backups are kept on the DESTINATION server. If set to 0, backups are never deleted.
+    - `EXTEND_BACKUP_ON_ERROR` - Number of days by which the deletion of backups on the DESTINATION server is postponed when no new backup is found (or the ORIGIN server is unreachable). If set to 0, deletion is never postponed.
+    - `SEND_EMAIL` - `always` sends a report email after every run, `on_error` only when an error occurs, and `no` disables emails.
+    - `SEND_DISCORD_HOOKS` - `always` sends a Discord notification after every run, `on_error` only when an error occurs, and `no` disables Discord notifications.
+    - `PING_USER` - `always` mentions the user in every Discord notification, `on_error` only when an error occurs, and `no` never mentions the user.
 
 <br>
 
-## Email Settings
-- Go to the file with your keys (the same as the set variable `CREDENTIALS_FILE` above).
-- Enter the SMTP details for the email server. Your email provider should provide these.
-- In `SEND_TO`, enter the email addresses to which informational emails will be sent. If you want to send an email to multiple addresses, separate them with a comma without a space.
+## FTP settings
+- Open your credentials file (the one set in `CREDENTIALS_FILE` above).
+- Enter the login details for both FTP servers. The ORIGIN server is where the backups are downloaded from (Proxmox). The DESTINATION server is where the backups are stored (e.g. a NAS).
 
 <br>
 
-## Discord Notifications (Webhooks)
-- Go to the file with your keys (the same as the set variable `CREDENTIALS_FILE` above).
-- Copy the Discord webhook URL and paste it into the `DISCORD_WEBHOOK` variable.
-- If you set that you want to be pinged, enter your Discord ID in the `DISCORD_PING_ID` variable.
+## Email settings
+- Open your credentials file (the one set in `CREDENTIALS_FILE` above).
+- Enter the SMTP details of your email server. Your email provider should give you these.
+- In `SEND_TO`, enter the email addresses that should receive the reports. To use multiple addresses, separate them with commas and no spaces.
 
 <br>
 
-## Database Initialization
-- Run the command `php syncer.php create-db`.
+## Discord notifications (webhooks)
+- Open your credentials file (the one set in `CREDENTIALS_FILE` above).
+- Copy your Discord webhook URL and paste it into `DISCORD_WEBHOOK`.
+- If you want to be mentioned in notifications (see `PING_USER`), enter your Discord user ID in `DISCORD_PING_ID`.
 
 <br>
 
-## Verification of Settings
-- Run the command `php syncer.php check-connection` to check the connection to the FTP servers.
-- Run the command `php syncer.php check-settings`  to check the set variables.
-- Run the command `php syncer.php check-email` to send a test email.
+## Database initialization
+- Run `php syncer.php create-db`.
 
 <br>
 
-## Run the Synchronization
-- You can manually start the backup with the command `php syncer.php autorun`.
-- You can also set up a CRON job to run the command `php syncer.php autorun` at a specific time (more in the file [`INSTALL.md`](INSTALL.md)).
+## Verifying the settings
+- Run `php syncer.php check-connection` to check the connection to both FTP servers.
+- Run `php syncer.php check-settings` to validate the values in `settings.php`.
+- Run `php syncer.php check-email` to send a test email.
+- Run `php syncer.php check-discord` to send a test Discord notification (add `ping` to also mention the user).
+
+<br>
+
+## Running the synchronization
+- Run `php syncer.php autorun` to start the synchronization manually.
+- You can also set up a cron job that runs `php syncer.php autorun` at a specific time (see [`INSTALL.md`](INSTALL.md)).
 
 <br>
 
 ## Help
-- You can display all available commands using the command `php syncer.php help`.
+- Run `php syncer.php help` to list all available commands.

@@ -1,24 +1,25 @@
-#### This project is not affiliated with Proxmox Server Solutions GmbH. This is just a simple extension for backing up Proxmox VE to FTP, which is not possible by default.
+#### This project is not affiliated with Proxmox Server Solutions GmbH. It is an independent tool for syncing Proxmox VE backups to an FTP server, which Proxmox VE does not support out of the box.
 
 <br>
 
-## Proxmox FTP Syncer is available under the MIT license
+## Proxmox FTP Syncer is available under the MIT License
 
-You can use, distribute, modify it for free. However, the author assumes no responsibility or warranty of any kind.
+You can use, modify and distribute it free of charge. However, the author provides no warranty of any kind and accepts no liability.
 
 <br>
 
-Full text of the licence:
+Full text of the license:
 
 Copyright (c) 2024 Karel Čermák (info@karlosoft.com)
-Permission is hereby granted, free of charge, to any person obtaining a copyof this software and associated documentation files (the "Software"), to dealin the Software without restriction, including without limitation the rightsto use, copy, modify, merge, publish, distribute, sublicense, and/or sellcopies of the Software, and to permit persons to whom the Software isfurnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included inall copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS ORIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THEAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHERLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS INTHE SOFTWARE.
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 <br>
 
-### Sources used:
+### Third-party components
 - PHPMailer (https://github.com/PHPMailer/PHPMailer)
-- Icons by FlatIcon (https://www.flaticon.com/)
+- Icons by Flaticon (https://www.flaticon.com/)

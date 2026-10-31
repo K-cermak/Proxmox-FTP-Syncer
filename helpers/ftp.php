@@ -13,7 +13,7 @@
 
         $login = @ftp_login($ftp, $user, $pass);
         if ($login === false) {
-            errorMessage("ERROR: Unable to login to the FTP server.");
+            errorMessage("ERROR: Unable to log in to the FTP server.");
             return false;
         }
 
@@ -21,7 +21,7 @@
 
         $chdir = @ftp_chdir($ftp, $path);
         if ($chdir === false) {
-            errorMessage("ERROR: Unable to change directory on the FTP server.");
+            errorMessage("ERROR: Unable to open the configured directory on the FTP server.");
             return false;
         }
         return $ftp;
@@ -31,7 +31,7 @@
     function extendBackupOnError($type) {
         if ($type == "classic" && EXTEND_BACKUP_ON_ERROR != 0) {
             editDeletionDate(connectToDb(), EXTEND_BACKUP_ON_ERROR);
-            successMessage("    Deletion date of all files has been updated.");
+            successMessage("    Deletion of all files has been postponed by " . EXTEND_BACKUP_ON_ERROR . " " . ngettext("day", "days", EXTEND_BACKUP_ON_ERROR) . ".");
         }
     }
 
@@ -66,12 +66,11 @@
         $listedAnythingNew = false;
 
         for ($i = 0; $i < count($newFiles); $i++) {
-            //skip folders
+            // SIZE fails for directories, so this skips them
             if (ftp_size($ftp, $newFiles[$i]) == -1) {
                 continue;
             }
 
-            //skip files that are already in the database
             if ($type != "list" && getFileData($dbConnection, $newFiles[$i]) !== false) {
                 continue;
             }
@@ -79,7 +78,6 @@
             echo "    " . $newFiles[$i];
             $listedAnythingNew = true;
 
-            //adding to DB
             if ($type == "light" || $type == "classic") {
                 if (KEEP_FILES_FOR == 0) {
                     $toDeleteOn = KEEP_FOREVER_DATE;
@@ -105,7 +103,7 @@
         ftp_close($ftp);
 
         if (!$listedAnythingNew) {
-            errorMessage("    Warning: No new files found.");
+            errorMessage("    WARNING: No new files found.");
             $syncStats["isok"] = false;
             $syncStats["errors"][] = "No new files found.";
             extendBackupOnError($type);
@@ -129,7 +127,7 @@
         $listedAnything = false;
 
         for ($i = 0; $i < count($allFiles); $i++) {
-            //if file not in FTP
+            // a file that still exists on the ORIGIN server is not lost
             if (ftp_size($ftp, $allFiles[$i]["fileName"]) != -1) {
                 continue;
             }
@@ -141,7 +139,7 @@
                 $syncStats["lost"] += 1;
                 $syncStats["isok"] = false;
                 changeFileState($dbConnection, $allFiles[$i]["fileName"], 5);
-                successMessage(" - edited in the database.", false);
+                successMessage(" - marked as lost in the database.", false);
             }
 
             echo "\n";
@@ -178,7 +176,7 @@
             $origin = getFtpConnection(ORIGIN_HOST, ORIGIN_PORT, ORIGIN_USER, ORIGIN_PASS, ORIGIN_PATH);
             if ($origin === false) {
                 $syncStats["isok"] = false;
-                $syncStats["errors"][] = "Unable to connect to the ORIGIN or DESTINATION server.";
+                $syncStats["errors"][] = "Unable to connect to the ORIGIN server.";
                 return;
             }
 
@@ -194,14 +192,14 @@
                     unlink($temp);
                 }
                 echo "\n";
-                errorMessage("ERROR: Unable to download the file from the ORIGIN server (File: $fileName).");
+                errorMessage("ERROR: The download from the ORIGIN server failed or is incomplete (file: $fileName).");
                 continue;
             }
 
             $destination = getFtpConnection(DEST_HOST, DEST_PORT, DEST_USER, DEST_PASS, DEST_PATH);    
             if ($destination === false) {
                 $syncStats["isok"] = false;
-                $syncStats["errors"][] = "Unable to connect to the ORIGIN or DESTINATION server.";
+                $syncStats["errors"][] = "Unable to connect to the DESTINATION server.";
                 unlink($temp);
                 return;
             }
@@ -218,7 +216,7 @@
                 $errors += 1;
                 changeFileState($dbConnection, $fileName, 5);
                 echo "\n";
-                errorMessage("ERROR: Unable to upload the file to the DESTINATION server (File: $fileName).");
+                errorMessage("ERROR: The upload to the DESTINATION server failed or is incomplete (file: $fileName).");
             }
 
             ftp_close($destination);
@@ -229,10 +227,10 @@
         echo "\nFinished at: " . date("Y-m-d H:i:s") . "\n";
         
         if ($errors == 0) {
-            successMessage("Syncing successful.");
+            successMessage("Sync completed successfully.");
         } else {
             $syncStats["isok"] = false;
-            $syncStats["errors"][] = "Syncing successful, but " . $errors . " files failed.";
+            $syncStats["errors"][] = "Sync completed, but " . $errors . " " . ngettext("file", "files", $errors) . " failed.";
             errorMessage("Successfully synced " . (count($files) - $errors) . "/" . count($files) . " " . $text . ", " .  $errors . " failed.");
         }
     }
@@ -250,7 +248,7 @@
 
         $ftp = getFtpConnection(DEST_HOST, DEST_PORT, DEST_USER, DEST_PASS, DEST_PATH);
         if ($ftp === false) {
-            errorMessage("Unable to connect to the DESTINATION server.");
+            errorMessage("ERROR: Unable to connect to the DESTINATION server.");
             return;
         }
 
@@ -265,11 +263,10 @@
             $fileName = $files[$i]["fileName"];
             changeFileState($dbConnection, $fileName, 3);
 
-            //delete file from destination
             if (!ftp_delete($ftp, $fileName)) {
                 $errors += 1;
                 changeFileState($dbConnection, $fileName, 5);
-                errorMessage("ERROR: Unable to delete the file from the DESTINATION server (File: $fileName).");
+                errorMessage("ERROR: Unable to delete the file from the DESTINATION server (file: $fileName).");
                 continue;
             }
 
@@ -282,10 +279,10 @@
         echo "\nFinished at: " . date("Y-m-d H:i:s") . "\n";
 
         if ($errors == 0) {
-            successMessage("Deletion successful.");
+            successMessage("Deletion completed successfully.");
         } else {
             $syncStats["isok"] = false;
-            $syncStats["errors"][] = "Deletion successful, but " . $errors . " files failed.";
+            $syncStats["errors"][] = "Deletion completed, but " . $errors . " " . ngettext("file", "files", $errors) . " failed.";
             errorMessage("Successfully deleted " . (count($files) - $errors) . "/" . count($files) . " " . $text . ", " .  $errors . " failed.");
         }
     }

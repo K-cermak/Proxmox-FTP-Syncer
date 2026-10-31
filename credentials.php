@@ -16,7 +16,7 @@
     define('EMAIL_HOST', 'smtp.example.com');
     define('EMAIL_PORT', '465');
     define('EMAIL_NAME', 'NoReply');
-    define('SEND_TO', 'john@example.com'); //multiple emails separated by comma, no spaces
+    define('SEND_TO', 'john@example.com'); // separate multiple addresses with commas, no spaces
 
     define('DISCORD_WEBHOOK', 'https://discord.com/api/webhooks/123456789/abcdefg');
     define('DISCORD_PING_ID', '123456789');

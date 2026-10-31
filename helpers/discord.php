@@ -3,8 +3,8 @@
         $data = [
             'embeds' => [
                 [
-                    'title' => '🔔 Proxmox Syncer Test Notification 🔔',
-                    'description' => 'This is a test notification from Proxmox Syncer.',
+                    'title' => '🔔 Proxmox FTP Syncer Test Notification 🔔',
+                    'description' => 'This is a test notification from Proxmox FTP Syncer.',
                     'color' => 0x0000FF,
                     'timestamp' => date('c')
                 ]
@@ -32,22 +32,22 @@
                     'inline' => true
                 ],
                 [
-                    'name' => 'Detected Files:',
+                    'name' => 'Detected files:',
                     'value' => $syncStats["detected"],
                     'inline' => true
                 ],
                 [
-                    'name' => 'Lost Files:',
+                    'name' => 'Lost files:',
                     'value' => $syncStats["lost"],
                     'inline' => true
                 ],
                 [
-                    'name' => 'Uploaded Files:',
+                    'name' => 'Uploaded files:',
                     'value' => $syncStats["uploaded"],
                     'inline' => true
                 ],
                 [
-                    'name' => 'Deleted Files:',
+                    'name' => 'Deleted files:',
                     'value' => $syncStats["deleted"],
                     'inline' => true
                 ]
@@ -56,10 +56,10 @@
         ];
 
         if ($syncStats["isok"]) {
-            $embed['title'] = '✅ Proxmox Syncer ended succesfully ✅';
+            $embed['title'] = '✅ Proxmox FTP Syncer finished successfully ✅';
             $embed['color'] = 0x00FF00;
         } else {
-            $embed['title'] = '❌ Proxmox Syncer ended with errors ❌';
+            $embed['title'] = '❌ Proxmox FTP Syncer finished with errors ❌';
             $embed['color'] = 0xFF0000;
             $embed['fields'][] = [
                 'name' => 'Errors:',
@@ -81,7 +81,7 @@
 
     function sendRequest($data) {
         if (!extension_loaded('curl')) {
-            errorMessage("ERROR: cURL extension is not installed. Discord Webhook cannot be sent.");
+            errorMessage("ERROR: The cURL extension is not installed, so the Discord webhook cannot be sent.");
             return;
         }
 
@@ -99,9 +99,9 @@
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         if ($httpCode === 204) {
-            successMessage("Discord Webhook sended successfully.");
+            successMessage("Discord webhook sent successfully.");
         } else {
-            errorMessage("Discord Webhook sending error, code ($httpCode).");
+            errorMessage("Failed to send the Discord webhook (HTTP code $httpCode).");
         }
     }
 ?>

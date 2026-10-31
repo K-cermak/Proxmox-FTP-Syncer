@@ -7,7 +7,7 @@
             return;
         }
 
-        //state: 0 - discovered, 1 - uploading, 2 - uploaded, 3 - deleting, 4 - deleted, 5 - lost
+        // state: 0 - discovered, 1 - uploading, 2 - uploaded, 3 - deleting, 4 - deleted, 5 - error / lost
         $connection = connectToDb();
         $connection->exec("CREATE TABLE `files` (
             `fileName` TEXT NOT NULL,
@@ -24,23 +24,22 @@
             return True;
         }
 
-        errorMessage("Are you sure you want to DELETE your old database and create a new one? This operation is irreversible! Type 'destroy' to continue: ");
+        errorMessage("This will DELETE the existing database and create a new one. This cannot be undone! Type 'destroy' to continue: ");
         $handle = fopen ("php://stdin","r");
         $line = fgets($handle);
         if(trim($line) != 'destroy'){
-            echo "Cancelled..\n";
+            echo "Cancelled.\n";
             return False;
         }
 
         fclose($handle);
-        unlink(DB_FILE); //delete old db
+        unlink(DB_FILE);
         return True;
     }
 
     function connectToDb() {
         $conn = new PDO("sqlite:" . DB_FILE);
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        //enable foreign keys
         $conn->exec("PRAGMA foreign_keys = ON;");
         if (!$conn) {
             errorMessage("ERROR: Could not connect to the database.");
@@ -104,22 +103,22 @@
 
     function extendBackup($days) {
         if (!is_numeric($days) || $days != round($days)) {
-            errorMessage("ERROR: Days is not set, is not a number or is decimal.");
+            errorMessage("ERROR: DAYS must be a whole number.");
             return;
         }
 
         $connection = connectToDb();
         editDeletionDate($connection, $days);
-        if ($days > 0) {
-            successMessage("Backup extended for $days " . ngettext("day", "days", $days) . ".");
+        if ($days >= 0) {
+            successMessage("Deletion postponed by $days " . ngettext("day", "days", $days) . ".");
         } else {
-            successMessage("Backup decreased for " . abs($days) . " " . ngettext("day", "days", abs($days)) . ".");
+            successMessage("Deletion brought forward by " . abs($days) . " " . ngettext("day", "days", abs($days)) . ".");
         }
     }
 
     function fixErrors($fixing) {
         if ($fixing != "upload" && $fixing != "delete" && $fixing != "error") {
-            errorMessage("ERROR: Invalid argument. Use 'upload' or 'delete' or 'error'.");
+            errorMessage("ERROR: Invalid argument. Use 'upload', 'delete' or 'error'.");
             return;
         }
 
@@ -138,7 +137,7 @@
         $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         if (count($files) == 0) {
-            successMessage("Database is clean. No errors found.");
+            successMessage("Nothing to fix. No files are in state '" . getState($state) . "'.");
             return;
         }
 
@@ -153,7 +152,7 @@
         }
 
         $text = ngettext("file", "files", count($files));
-        successMessage("All files in state '". getState($state) ."' are now in state '" . getState($newState) . "'. (" . count($files) . " " . $text . ")");
+        successMessage("All files in state '" . getState($state) . "' are now in state '" . getState($newState) . "' (" . count($files) . " " . $text . ").");
         echo "Please run 'php syncer.php autorun' to continue.\n";
     }
 ?>

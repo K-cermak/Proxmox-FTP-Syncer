@@ -9,12 +9,12 @@
     **                                                              ( )_| |
     **                                                             `\___/'              Version 1.2
     **
-    **    Proxmox Syncer v1.2
+    **    Proxmox FTP Syncer v1.2
     **    Developed by: Karel Cermak | karlosoft.com
     **    Licensed under the MIT License.
     */
 
-    set_time_limit(0); //disable time limit, change if you want
+    set_time_limit(0); // large backups can take hours to transfer
 
     $syncStats = array(
         "started" => date("Y-m-d H:i:s"),
@@ -44,7 +44,7 @@
 
     $arg = $argv[1] ?? '?';
     if ($arg == "?") {
-        errorMessage("ERROR: Not command line arguments found.");
+        errorMessage("ERROR: No command specified.");
         getHelp();
         return;
     }
@@ -123,7 +123,7 @@
             break;
 
         default:
-            errorMessage("ERROR: Invalid command line argument.");
+            errorMessage("ERROR: Unknown command.");
             getHelp();
             break;
     }

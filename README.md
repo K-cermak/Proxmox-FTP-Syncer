@@ -1,8 +1,18 @@
-# Proxmox FTP Syncer
+<p align="center">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://cdn.karlosoft.com/cdn-data/ks/img/proxsync/logo.svg">
+        <source media="(prefers-color-scheme: light)" srcset="https://cdn.karlosoft.com/cdn-data/ks/img/proxsync/logo-dark.svg">
+        <img alt="Proxmox FTP Syncer" src="https://cdn.karlosoft.com/cdn-data/ks/img/proxsync/logo-dark.svg" width="700">
+    </picture>
+    <br>
+    <strong>CLI tool that automatically syncs Proxmox backups to a remote FTP server.</strong>
+    <br>
+    <br>
+    <br>
+    <br>
+    <img src="https://cdn.karlosoft.com/cdn-data/ks/img/proxsync/github.png" width="700" alt="Proxmox FTP Syncer showcase">
 
-By Karel Čermák | [Karlosoft](https://karlosoft.com)
-
-<img src="https://cdn.karlosoft.com/cdn-data/ks/img/proxsync/github.png" width="700" alt="Proxmox FTP Syncer">
+</p>
 
 <br>
 

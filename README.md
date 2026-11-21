@@ -1,6 +1,6 @@
 # Proxmox FTP Syncer
 
-By Karel Cermak | [Karlosoft](https://karlosoft.com)
+By Karel Čermák | [Karlosoft](https://karlosoft.com)
 
 <img src="https://cdn.karlosoft.com/cdn-data/ks/img/proxsync/github.png" width="700" alt="Proxmox FTP Syncer">
 
